@@ -1,7 +1,6 @@
 import streamlit as st
 import requests
 import base64
-import subprocess
 import platform
 import io
 
@@ -20,7 +19,6 @@ def check_password():
         st.sidebar.title("🔐 LAZURIT AI Render")
         pwd = st.sidebar.text_input("Введите персональный код доступа:", type="password")
         
-        # Получаем данные из Secrets (формат [users.Пароль])
         users_data = st.secrets.get("users", {})
         
         if pwd in users_data:
@@ -28,33 +26,25 @@ def check_password():
             st.session_state.authenticated = True
             st.session_state.user_role = user_info.get("name", "Сотрудник")
             st.session_state.user_api_key = user_info.get("key", "")
-            st.sidebar.success(f"Доступ: {st.session_state.user_role}")
             st.rerun()
         elif pwd:
             st.sidebar.error("❌ Код не опознан")
-        
-        st.info("Для получения доступа обратитесь в IT-отдел.")
         st.stop()
 
 check_password()
 
-# Присваиваем токен из сессии конкретного пользователя
 APPLICATION_TOKEN = st.session_state.user_api_key
 
-# --- ПРОМПТЫ ---
-BASE_PHOTO_PROMPT = (
-    "Masterpiece, 8k resolution, photorealistic interior photography, Architectural Digest style. "
-    "Strictly maintain the original furniture geometry and color palette. "
-    "Enhance textures (wood grain, marble, fabric) with professional cinematic studio lighting. "
-    "Natural soft sunlight from windows, deep realistic shadows, ray-traced reflections. "
-    "NO 3D render look, NO flat textures."
-)
+# ТВОИ ОРИГИНАЛЬНЫЕ ПРОМПТЫ (БЕЗ ИЗМЕНЕНИЙ)
+BASE_PHOTO_PROMPT = ("Masterpiece, 8k resolution, photorealistic interior photography, Architectural Digest style. Maintain the original color palette and materials of the furniture strictly. Enhance existing textures (wood grain, stone, fabric) without changing their color. Replace flat lighting with professional cinematic studio lighting and realistic global illumination. Add natural soft sunlight and deep realistic shadows to create depth. High-contrast, sharp details, realistic reflections on surfaces. Feel free to completely re-texture surfaces. Add dramatic lighting. Replace the flat lighting of the render with high-contrast studio light. Ensure 100% photorealism, Architectural Digest style. Masterpiece, 8k resolution, photorealistic interior photography. Completely re-texture all surfaces using high-end materials (marble, brushed metal, grain wood). Replace flat CG lighting with realistic global illumination and dramatic cinematic shadows.  Add subtle natural sunlight from windows.  Architectural Digest style, sharp focus, volumetric fog, ray-traced reflections. NO 3D render look, NO flat textures.")
 
 PROMPT_PRESETS = {
     "Базовый промт": f"{BASE_PHOTO_PROMPT}",
-    "️Дневной свет": f"Natural bright daylight from windows, soft sun rays. {BASE_PHOTO_PROMPT}",
-    "Студийный свет": f"Professional architectural studio lighting, balanced fills. {BASE_PHOTO_PROMPT}",
-    "Вечернее освещение": f"Warm cozy evening light, mix of interior lamps and dusk. {BASE_PHOTO_PROMPT}",
+    "️Свой промт": f"",
+    "Базовый + Дневной свет": f"Natural bright daylight from windows, soft sun rays. {BASE_PHOTO_PROMPT}",
+    "Базовый + Студийный свет": f"Professional architectural studio lighting, balanced fills. {BASE_PHOTO_PROMPT}",
+    "Базовый + Вечернее освещение": f"Warm cozy evening light, mix of interior lamps and dusk. {BASE_PHOTO_PROMPT}",
+    "Базовый + Unreal render style": f"Ultra-realistic Unreal Engine 5.4 Lumen render style. {BASE_PHOTO_PROMPT}",
 }
 
 # --- ФУНКЦИИ ---
@@ -76,71 +66,99 @@ def process_image(img_b64, user_prompt):
     }
     return requests.post(BASE_URL, json=payload, headers=headers).json()
 
-# --- ИНТЕРФЕЙС ---
+# --- ИНИЦИАЛИЗАЦИЯ ---
 if 'history' not in st.session_state: st.session_state.history = []
 if 'current_prompt' not in st.session_state: st.session_state.current_prompt = list(PROMPT_PRESETS.values())[0]
+if 'last_full_response' not in st.session_state: st.session_state.last_full_response = ""
 
+# --- ИНТЕРФЕЙС ---
 st.set_page_config(page_title="LAZURIT AI Render", layout="wide", page_icon=LOGO_PATH)
 
 logo_b64 = get_base64_logo(LOGO_PATH)
 st.markdown(f"""
     <style>
-    .stButton button {{ font-size: 20px !important; height: 3em !important; }}
-    .header-container {{ display: flex; align-items: center; gap: 15px; }}
-    .header-logo {{ width: 80px; }}
+    html, body, [class*="st-"] {{ font-size: 20px !important; }}
+    .stButton button {{ font-size: 22px !important; height: 3em !important; font-weight: bold !important; }}
+    label {{ font-size: 22px !important; font-weight: bold !important; }}
+    .header-container {{ display: flex; align-items: center; gap: 15px; padding: 5px 0; }}
+    .header-logo {{ width: 100px; }}
+    .header-text {{ font-size: 32px !important; font-weight: 800; margin: 0; }}
     </style>
+
     <div class="header-container">
         <img src="data:image/jpeg;base64,{logo_b64}" class="header-logo">
-        <h2 style="margin:0;">LAZURIT AI Render</h2>
+        <h1 class="header-text">LAZURIT AI Render: Фотореализм</h1>
     </div>
-    <div style="color: gray;">Аккаунт: {st.session_state.user_role}</div>
-    <hr>
+    <div style="color: gray; padding-bottom: 10px;">Аккаунт: {st.session_state.user_role}</div>
+    <hr style="margin-top: 0;">
     """, unsafe_allow_html=True)
 
 col1, col2 = st.columns([1, 2])
 
 with col1:
-    st.subheader("1. Исходник")
-    uploaded_file = st.file_uploader("Загрузите фото", type=['jpg', 'png', 'jpeg'])
-    if uploaded_file: st.image(uploaded_file, width=300)
-    
-    st.write("Стиль света:")
-    p_cols = st.columns(2)
-    for i, (name, text) in enumerate(PROMPT_PRESETS.items()):
-        if p_cols[i % 2].button(name, use_container_width=True):
-            st.session_state.current_prompt = text
+    st.subheader("1. Загрузка данных")
+    uploaded_file = st.file_uploader("Выберите фото или рендер", type=['jpg', 'jpeg', 'png'])
+
+    if uploaded_file:
+        st.image(uploaded_file, caption="Ваш исходник", width=350)
+
+    st.write("**Выбор освещения:**")
+    preset_cols = st.columns(3)
+    for i, (name, full_text) in enumerate(PROMPT_PRESETS.items()):
+        if preset_cols[i % 3].button(name, use_container_width=True):
+            st.session_state.current_prompt = full_text
             st.rerun()
-    
-    user_prompt = st.text_area("Задание:", value=st.session_state.current_prompt, height=200)
+
+    user_prompt = st.text_area("Техническое задание:", value=st.session_state.current_prompt, height=250)
 
 with col2:
-    st.subheader("2. Результат")
-    if st.button("🚀 Сгенерировать рендер", use_container_width=True):
+    st.subheader("2. Результат обработки")
+    
+    # Кнопка всегда доступна после входа
+    if st.button("🚀 Запустить генерацию", use_container_width=True):
         if not uploaded_file:
-            st.error("Ошибка: Загрузите изображение!")
-        elif not APPLICATION_TOKEN:
-            st.error("Ошибка: В вашем профиле не настроен API-ключ.")
+            st.error("Загрузите изображение!")
         else:
-            with st.spinner("Магия нейросети в процессе..."):
+            with st.spinner("Создаем фотореалистичный рендер..."):
                 try:
                     uploaded_file.seek(0)
-                    img_b64 = image_to_base64(uploaded_file.read())
+                    img_bytes = uploaded_file.read()
+                    img_b64 = image_to_base64(img_bytes)
                     result = process_image(img_b64, user_prompt)
-                    
-                    msg = result['outputs'][0]['outputs'][0]['results']['message']['text']
-                    img_data = msg.split("|||")[1] if "|||" in msg else msg
-                    clean_data = img_data.replace('"', '').replace("'", "").strip()
-                    raw_b64 = clean_data.split("base64,")[1] if "base64," in clean_data else clean_data
-                    
-                    out_bytes = base64.b64decode(raw_b64)
-                    st.image(out_bytes, caption=f"Готово для: {st.session_state.user_role}", use_container_width=True)
-                    st.session_state.history.insert(0, out_bytes)
+
+                    if 'outputs' in result:
+                        msg = result['outputs'][0]['outputs'][0]['results']['message']['text']
+                        st.session_state.last_full_response = msg
+                        
+                        img_data = msg.split("|||")[1] if "|||" in msg else msg
+                        clean_data = img_data.replace('"', '').replace("'", "").strip()
+                        raw_b64 = clean_data.split("base64,")[1] if "base64," in clean_data else clean_data
+
+                        out_bytes = base64.b64decode(raw_b64)
+                        st.image(out_bytes, caption="Готовый результат", use_container_width=True)
+
+                        st.session_state.history.insert(0, out_bytes)
+                        if len(st.session_state.history) > 12: st.session_state.history.pop()
+                    else:
+                        st.error("Ошибка API: Проверьте баланс ключа или промпт.")
                 except Exception as e:
-                    st.error(f"Ошибка API: Проверьте ваш ключ или баланс.")
+                    st.error(f"Ошибка при генерации: {e}")
+
+    if st.session_state.last_full_response:
+        st.divider()
+        with st.expander("🛠 Итоговый промпт", expanded=True):
+            full_text = st.session_state.last_full_response
+            marker = "![result](data:image/png;base64,"
+            if marker in full_text:
+                only_prompt = full_text.split(marker)[0].strip()
+            else:
+                only_prompt = full_text.split("|||")[0].strip()
+            st.text_area("Лог промпта:", value=only_prompt, height=400)
 
 if st.session_state.history:
     st.divider()
-    st.subheader("Последние работы")
-    h_cols = st.columns(6)
-    for idx, img in enumerate(st.session_state.history[:6]):
-        with h_cols[idx]: st.image(img, use_container_width=True)
+    st.subheader("🕒 Последние результаты")
+    h_cols = st.columns(12)
+    for idx, img in enumerate(st.session_state.history):
+        with h_cols[idx]:
+            st.image(img, use_container_width=True)
