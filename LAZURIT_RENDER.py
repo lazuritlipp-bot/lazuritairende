@@ -141,6 +141,6 @@ with col2:
 if st.session_state.history:
     st.divider()
     st.subheader("Последние работы")
-    h_cols = st.columns(6)
+    h_cols = st.columns(10)
     for idx, img in enumerate(st.session_state.history[:6]):
         with h_cols[idx]: st.image(img, use_container_width=True)
