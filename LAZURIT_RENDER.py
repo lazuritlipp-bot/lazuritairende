@@ -8,6 +8,9 @@ import io
 BASE_URL = "https://lzrt-nocode.gpt.mws.ru/api/v1/run/bf1dc235-5c36-4bba-8d7e-a88cd5e19bd6?stream=false"
 LOGO_PATH = "logo.jpg"
 
+import streamlit as st
+import base64
+
 # --- СИСТЕМА ЛИЧНЫХ ДОСТУПОВ ---
 def check_password():
     if "authenticated" not in st.session_state:
@@ -16,7 +19,7 @@ def check_password():
         st.session_state.user_api_key = ""
 
     if not st.session_state.authenticated:
-        # 1. Установка фонового изображения для центральной части
+        # 1. Установка фонового изображения
         try:
             with open("background.png", "rb") as f:
                 data = f.read()
@@ -31,19 +34,21 @@ def check_password():
                     background-repeat: no-repeat;
                     background-attachment: fixed;
                 }}
-                /* Затемнение фона для лучшей читаемости, если нужно */
+                /* Затемнение для читаемости */
                 .stApp::before {{
                     content: "";
                     position: absolute;
                     top: 0; left: 0; width: 100%; height: 100%;
-                    background-color: rgba(0, 0, 0, 0.3); 
+                    background-color: rgba(0, 0, 0, 0.4); 
+                    z-index: -1;
                 }}
                 </style>
                 """, unsafe_allow_html=True)
         except Exception as e:
-            st.error(f"Не удалось загрузить фон: {e}")
+            # Если файла нет, заливаем темным цветом, чтобы не было белого пятна
+            st.markdown("<style>.stApp { background-color: #0E1117; }</style>", unsafe_allow_html=True)
 
-        # 2. Боковая панель (без изменений)
+        # 2. Боковая панель входа
         st.sidebar.title("🔐 LAZURIT AI Render")
         pwd = st.sidebar.text_input("Введите персональный код доступа:", type="password")
         login_button = st.sidebar.button("Войти", use_container_width=True)
@@ -67,9 +72,18 @@ def check_password():
                 st.sidebar.error("❌ Код не опознан")
         st.stop()
 
+# Запускаем проверку
 check_password()
 
+# --- ПОЛУЧЕНИЕ ТОКЕНА ПОСЛЕ ВХОДА ---
+# Теперь эта переменная будет доступна только авторизованным пользователям
 APPLICATION_TOKEN = st.session_state.user_api_key
+
+# Опционально: Очистка фона после входа, чтобы он не мешал работе
+st.markdown("<style>.stApp { background-image: none; }</style>", unsafe_allow_html=True)
+
+# Далее идет твой основной код приложения
+st.title(f"Привет, {st.session_state.user_role}!")
 
 # ТВОИ ОРИГИНАЛЬНЫЕ ПРОМПТЫ (БЕЗ ИЗМЕНЕНИЙ)
 BASE_PHOTO_PROMPT = ("Masterpiece, 8k resolution, photorealistic interior photography, Architectural Digest style. Maintain the original color palette and materials of the furniture strictly. Enhance existing textures (wood grain, stone, fabric) without changing their color. Replace flat lighting with professional cinematic studio lighting and realistic global illumination. Add natural soft sunlight and deep realistic shadows to create depth. High-contrast, sharp details, realistic reflections on surfaces. Feel free to completely re-texture surfaces. Add dramatic lighting. Replace the flat lighting of the render with high-contrast studio light. Ensure 100% photorealism, Architectural Digest style. Masterpiece, 8k resolution, photorealistic interior photography. Completely re-texture all surfaces using high-end materials (marble, brushed metal, grain wood). Replace flat CG lighting with realistic global illumination and dramatic cinematic shadows.  Add subtle natural sunlight from windows.  Architectural Digest style, sharp focus, volumetric fog, ray-traced reflections. NO 3D render look, NO flat textures.")
