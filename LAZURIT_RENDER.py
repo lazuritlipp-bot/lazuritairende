@@ -24,10 +24,11 @@ def check_password():
         # Кнопка входа
         login_button = st.sidebar.button("Войти", use_container_width=True)
         
-        # Подпись под кнопкой
+        # Подпись под кнопкой со ссылкой
         st.sidebar.markdown("""
             <div style="font-size: 14px; color: gray; margin-top: 10px;">
-            По вопросам доступа обращайтесь на портале поддержки https://hd.lazurit.us
+            По вопросам доступа обращайтесь на портал поддержки
+            <a href="https://hd.lazurit.us" target="_blank" style="color: #007bff; text-decoration: none;">портале поддержки</a>
             </div>
             """, unsafe_allow_html=True)
         
