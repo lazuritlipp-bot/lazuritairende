@@ -28,7 +28,7 @@ def check_password():
         st.sidebar.markdown("""
             <div style="font-size: 14px; color: gray; margin-top: 10px;">
             По вопросам доступа обращайтесь на 
-            <a href="https://hd.lazurit.us" target="_blank" style="color: #007bff; text-decoration: none;">портал поддержки</a>
+            <a href="https://hd.lazurit.us/servicedesk/customer/portals" target="_blank" style="color: #007bff; text-decoration: none;">портал поддержки</a>
             </div>
             """, unsafe_allow_html=True)
         
