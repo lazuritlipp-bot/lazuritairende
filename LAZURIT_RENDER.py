@@ -27,7 +27,7 @@ def check_password():
         # Подпись под кнопкой
         st.sidebar.markdown("""
             <div style="font-size: 14px; color: gray; margin-top: 10px;">
-            По вопросам доступа обращайтесь на портале поддержки
+            По вопросам доступа обращайтесь на портале поддержки https://hd.lazurit.us
             </div>
             """, unsafe_allow_html=True)
         
