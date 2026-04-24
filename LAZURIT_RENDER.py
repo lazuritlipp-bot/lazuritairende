@@ -16,15 +16,38 @@ def check_password():
         st.session_state.user_api_key = ""
 
     if not st.session_state.authenticated:
+        # 1. Установка фонового изображения для центральной части
+        try:
+            with open("background.png", "rb") as f:
+                data = f.read()
+                b64_bg = base64.b64encode(data).decode()
+            
+            st.markdown(f"""
+                <style>
+                .stApp {{
+                    background-image: url("data:image/png;base64,{b64_bg}");
+                    background-size: cover;
+                    background-position: center;
+                    background-repeat: no-repeat;
+                    background-attachment: fixed;
+                }}
+                /* Затемнение фона для лучшей читаемости, если нужно */
+                .stApp::before {{
+                    content: "";
+                    position: absolute;
+                    top: 0; left: 0; width: 100%; height: 100%;
+                    background-color: rgba(0, 0, 0, 0.3); 
+                }}
+                </style>
+                """, unsafe_allow_html=True)
+        except Exception as e:
+            st.error(f"Не удалось загрузить фон: {e}")
+
+        # 2. Боковая панель (без изменений)
         st.sidebar.title("🔐 LAZURIT AI Render")
-        
-        # Поле ввода
         pwd = st.sidebar.text_input("Введите персональный код доступа:", type="password")
-        
-        # Кнопка входа
         login_button = st.sidebar.button("Войти", use_container_width=True)
         
-        # Подпись под кнопкой со ссылкой
         st.sidebar.markdown("""
             <div style="font-size: 14px; color: gray; margin-top: 10px;">
             По вопросам доступа обращайтесь на 
