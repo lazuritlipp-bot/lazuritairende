@@ -17,18 +17,30 @@ def check_password():
 
     if not st.session_state.authenticated:
         st.sidebar.title("🔐 LAZURIT AI Render")
+        
+        # Поле ввода
         pwd = st.sidebar.text_input("Введите персональный код доступа:", type="password")
         
-        users_data = st.secrets.get("users", {})
+        # Кнопка входа
+        login_button = st.sidebar.button("Войти", use_container_width=True)
         
-        if pwd in users_data:
-            user_info = users_data[pwd]
-            st.session_state.authenticated = True
-            st.session_state.user_role = user_info.get("name", "Сотрудник")
-            st.session_state.user_api_key = user_info.get("key", "")
-            st.rerun()
-        elif pwd:
-            st.sidebar.error("❌ Код не опознан")
+        # Подпись под кнопкой
+        st.sidebar.markdown("""
+            <div style="font-size: 14px; color: gray; margin-top: 10px;">
+            По вопросам доступа обращайтесь на портале поддержки
+            </div>
+            """, unsafe_allow_html=True)
+        
+        if login_button:
+            users_data = st.secrets.get("users", {})
+            if pwd in users_data:
+                user_info = users_data[pwd]
+                st.session_state.authenticated = True
+                st.session_state.user_role = user_info.get("name", "Сотрудник")
+                st.session_state.user_api_key = user_info.get("key", "")
+                st.rerun()
+            else:
+                st.sidebar.error("❌ Код не опознан")
         st.stop()
 
 check_password()
