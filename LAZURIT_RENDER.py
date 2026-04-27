@@ -1,8 +1,3 @@
-Чтобы кнопка оказалась именно под приветствием «Developer!...» и при этом ничего не «поплыло», мы откажемся от стандартных колонок Streamlit в этом месте. 
-
-Я интегрировал кнопку прямо в HTML-структуру шапки. Теперь она находится в левой части, под текстом приветствия, и оформлена как аккуратная ссылка-кнопка.
-
-```python
 import streamlit as st
 import requests
 import base64
@@ -238,4 +233,3 @@ with col_hist:
     st.markdown("<b>История</b>", unsafe_allow_html=True)
     for img in st.session_state.history[1:6]:
         st.image(img, use_container_width=True)
-```
