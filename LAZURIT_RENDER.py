@@ -89,7 +89,7 @@ def check_password():
                 height: 46px !important;
                 padding: 0 14px !important;
             }}
-            div[data-testid="stForm"] input::placeholder {{ color: rgba(255, 255, 255, 0.45) !important; }}
+            div[data-testid="stForm"] input::placeholder {{ color: rgba(255, 255, 255, 1) !important; }}
             /* Кнопка показа пароля внутри инпута — прозрачная, не градиентная */
             div[data-testid="stForm"] [data-testid="stTextInput"] button {{
                 background: transparent !important;
