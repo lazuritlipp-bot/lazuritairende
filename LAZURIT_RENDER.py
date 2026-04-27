@@ -10,34 +10,33 @@ st.set_page_config(
     menu_items=None
 )
 
-# Обработка выхода через URL
-if st.query_params.get("logout") == "true":
-    for key in list(st.session_state.keys()):
-        del st.session_state[key]
-    st.query_params.clear()
-    st.rerun()
-
 # --- КОНФИГУРАЦИЯ ---
 BASE_URL = "https://lzrt-nocode.gpt.mws.ru/api/v1/run/bf1dc235-5c36-4bba-8d7e-a88cd5e19bd6?stream=false"
 LOGO_PATH = "logo2.png"
 BACKGROUND_PATH = "background.png"
 
+# --- УТИЛИТЫ ---
 @st.cache_data
-def _read_b64(path):
+def _read_b64(path: str) -> str:
     try:
         with open(path, "rb") as fh:
             return base64.b64encode(fh.read()).decode()
     except Exception:
         return ""
 
-def image_to_base64(image_bytes):
+def image_to_base64(image_bytes: bytes) -> str:
     return base64.b64encode(image_bytes).decode("utf-8")
 
-def image_src(path):
+def image_src(path: str) -> str:
     b64 = _read_b64(path)
-    if not b64:
-        return ""
-    return f"data:image/png;base64,{b64}"
+    return f"data:image/png;base64,{b64}" if b64 else ""
+
+# --- ВЫХОД (если хотите оставить, но без переходов по ссылкам) ---
+if st.query_params.get("logout") == "true":
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
+    st.query_params.clear()
+    st.rerun()
 
 # --- ЭКРАН ВХОДА ---
 def check_password():
@@ -59,19 +58,10 @@ def check_password():
         st.markdown(
             f"""
             <style>
-            [data-testid="stSidebar"], 
-            [data-testid="stSidebarCollapsedControl"], 
-            header, 
-            [data-testid="stHeader"], 
-            [data-testid="stToolbar"],
-            #MainMenu {{
+            [data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"], header, [data-testid="stHeader"] {{
                 display: none !important;
-                visibility: hidden !important;
-                height: 0 !important;
             }}
-
             .stApp {{ {bg_css} }}
-
             .block-container {{
                 padding-top: 0 !important;
                 padding-bottom: 0 !important;
@@ -79,69 +69,28 @@ def check_password():
             }}
 
             div[data-testid="stForm"] {{
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                width: 420px;
-                max-width: 92vw;
-                height: auto !important;
-                min-height: 0 !important;
+                position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                width: 420px; max-width: 92vw; height: auto !important; min-height: 0 !important;
                 background: rgba(30, 30, 32, 0.82) !important;
-                backdrop-filter: blur(14px);
-                -webkit-backdrop-filter: blur(14px);
-                border-radius: 22px;
-                padding: 28px 32px 24px !important;
+                backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+                border-radius: 22px; padding: 28px 32px 24px !important;
                 box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55);
-                border: 1px solid rgba(255, 255, 255, 0.08) !important;
-                z-index: 9999;
+                border: 1px solid rgba(255, 255, 255, 0.08) !important; z-index: 9999;
             }}
-
-            div[data-testid="stForm"] label {{
-                color: #FFFFFF !important;
-                font-weight: 500;
-                font-size: 14px;
-            }}
-
+            div[data-testid="stForm"] label {{ color: #FFFFFF !important; font-weight: 500; font-size: 14px; }}
             div[data-testid="stForm"] input {{
-                background: rgba(255, 255, 255, 0.06) !important;
-                color: #FFFFFF !important;
-                border: 1px solid rgba(255, 255, 255, 0.12) !important;
-                border-radius: 10px !important;
-                height: 46px !important;
-                padding: 0 14px !important;
-                width: 100% !important;
+                background: rgba(255, 255, 255, 0.06) !important; color: #FFFFFF !important;
+                border: 1px solid rgba(255, 255, 255, 0.12) !important; border-radius: 10px !important;
+                height: 46px !important; padding: 0 14px !important; width: 100% !important;
             }}
-
-            div[data-testid="stForm"] input::placeholder {{
-                color: rgba(255, 255, 255, 0.45) !important;
-            }}
-
             div[data-testid="stForm"] [data-testid="stFormSubmitButton"] button {{
                 background: linear-gradient(90deg, #A78BFA 0%, #F87171 100%) !important;
-                color: white !important;
-                border: none !important;
-                height: 50px !important;
-                font-weight: 600 !important;
-                font-size: 16px !important;
-                border-radius: 10px !important;
-                width: 100% !important;
-                margin-top: 6px;
+                color: white !important; border: none !important; height: 50px !important;
+                font-weight: 600 !important; font-size: 16px !important; border-radius: 10px !important;
+                width: 100% !important; margin-top: 6px;
             }}
-
-            .login-logo {{
-                display: block;
-                margin: 0 auto 14px;
-                width: 78%;
-                max-width: 320px;
-            }}
-
-            .login-subtitle {{
-                color: rgba(255, 255, 255, 0.85);
-                text-align: center;
-                font-size: 14px;
-                margin: 0 0 22px;
-            }}
+            .login-logo {{ display: block; margin: 0 auto 14px; width: 78%; max-width: 320px; }}
+            .login-subtitle {{ color: rgba(255, 255, 255, 0.85); text-align: center; font-size: 14px; margin: 0 0 22px; }}
             </style>
             """,
             unsafe_allow_html=True,
@@ -154,11 +103,7 @@ def check_password():
                     unsafe_allow_html=True,
                 )
 
-            st.markdown(
-                "<p class='login-subtitle'>Введите ваш персональный код доступа.</p>",
-                unsafe_allow_html=True,
-            )
-
+            st.markdown("<p class='login-subtitle'>Введите ваш персональный код доступа.</p>", unsafe_allow_html=True)
             pwd = st.text_input("Код доступа", type="password", placeholder="Введите код")
             submitted = st.form_submit_button("Войти", use_container_width=True)
 
@@ -172,7 +117,6 @@ def check_password():
                     st.rerun()
                 else:
                     st.error("❌ Код не опознан")
-
         st.stop()
 
 check_password()
@@ -184,21 +128,58 @@ def logout():
         del st.session_state[key]
     st.rerun()
 
-# --- СТИЛИ РАБОЧЕЙ ОБЛАСТИ ---
+# --- ПРОМПТЫ ---
+BASE_PHOTO_PROMPT = (
+    "Masterpiece, 8k resolution, photorealistic interior photography, Architectural Digest style. "
+    "Maintain the original color palette and materials of the furniture strictly. "
+    "Enhance existing textures (wood grain, stone, fabric) without changing their color. "
+    "Replace flat lighting with professional cinematic studio lighting and realistic global illumination. "
+    "Add natural soft sunlight and deep realistic shadows to create depth. "
+    "High-contrast, sharp details, realistic reflections."
+)
+
+PROMPT_PRESETS = {
+    "Студия": f"Professional architectural studio lighting, balanced fills. {BASE_PHOTO_PROMPT}",
+    "День": f"Natural bright daylight from windows, soft sun rays. {BASE_PHOTO_PROMPT}",
+    "Вечер": f"Warm cozy evening light, mix of interior lamps and dusk. {BASE_PHOTO_PROMPT}",
+    "Аксессуары": f"{BASE_PHOTO_PROMPT}",
+    "Свой промт": "",  # пусто = пользователь пишет сам
+}
+
+PRESET_NAMES = ["Студия", "День", "Вечер", "Аксессуары"]
+PRESET_PATHS = ["studio.png", "den.png", "vecher.png", "acsesoar.png"]
+
+# --- STATE ---
+if "history" not in st.session_state:
+    st.session_state.history = []
+
+if "selected_preset" not in st.session_state:
+    st.session_state.selected_preset = "Студия"
+
+if "prompt_text" not in st.session_state:
+    # стартовое значение = выбранный пресет
+    st.session_state.prompt_text = PROMPT_PRESETS[st.session_state.selected_preset]
+
+if "last_response" not in st.session_state:
+    st.session_state.last_response = ""
+
+# --- CALLBACKS (без query_params и без переходов по ссылкам) ---
+def apply_preset(preset_name: str):
+    st.session_state.selected_preset = preset_name
+    st.session_state.prompt_text = PROMPT_PRESETS[preset_name]
+
+def apply_custom_prompt():
+    st.session_state.selected_preset = "Свой промт"
+    st.session_state.prompt_text = PROMPT_PRESETS["Свой промт"]
+
+# --- СТИЛИ ---
 st.markdown(
     """
     <style>
-    .stApp {
-        background-color: #E8E8E1;
-    }
+    .stApp { background-color: #E8E8E1; }
 
-    /* Скрываем верхнюю полосу Streamlit */
-    header,
-    [data-testid="stHeader"],
-    [data-testid="stToolbar"],
-    [data-testid="stDecoration"],
-    #MainMenu,
-    footer {
+    /* скрываем верхнюю панель Streamlit */
+    header, [data-testid="stHeader"], [data-testid="stToolbar"], [data-testid="stDecoration"], #MainMenu, footer {
         display: none !important;
         visibility: hidden !important;
         height: 0 !important;
@@ -212,7 +193,6 @@ st.markdown(
         padding-right: 2rem !important;
     }
 
-    /* Шапка */
     .custom-header {
         background-color: white;
         padding: 15px 30px 45px 30px;
@@ -235,10 +215,7 @@ st.markdown(
     }
 
     /* Кнопка выхода внутри шапки */
-    div.element-container:has(.logout-marker) {
-        display: none;
-    }
-
+    div.element-container:has(.logout-marker) { display: none; }
     div.element-container:has(.logout-marker) + div.element-container {
         margin-top: -58px !important;
         margin-left: 30px !important;
@@ -247,7 +224,6 @@ st.markdown(
         z-index: 10;
         width: fit-content;
     }
-
     div.element-container:has(.logout-marker) + div.element-container button {
         background: transparent !important;
         color: #666 !important;
@@ -259,7 +235,6 @@ st.markdown(
         font-size: 13.5px !important;
         transition: all 0.2s;
     }
-
     div.element-container:has(.logout-marker) + div.element-container button:hover {
         background: #FF4B4B !important;
         color: white !important;
@@ -274,121 +249,70 @@ st.markdown(
         border: 1px solid #E0E0E0;
         margin-bottom: 15px;
     }
+    .card > b { color: #000000 !important; }
 
-    .card > b {
-        color: #000000 !important;
+    /* Загрузчик и textarea */
+    div[data-testid="stFileUploader"] > section { border-radius: 16px !important; }
+    div[data-testid="stTextArea"] textarea { border-radius: 16px !important; }
+
+    /* РЯД ИКОНОК (4 в ряд) */
+    .preset-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        margin-top: 10px;
+        margin-bottom: 14px;
     }
 
-    /* Загрузчик и поле промпта */
-    div[data-testid="stFileUploader"] > section {
-        border-radius: 16px !important;
+    /* Кнопки-иконки (Streamlit) */
+    .preset-row div.stButton > button {
+        width: 100% !important;
+        height: 74px !important;
+        border-radius: 999px !important;        /* круглая/овальная */
+        border: 1.5px solid #D9D0C5 !important;
+        background: #FFFFFF !important;
+        padding: 0 !important;
+        transition: all 0.18s ease !important;
+        box-shadow: 0 5px 14px rgba(0,0,0,0.04) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
 
-    div[data-testid="stTextArea"] textarea {
-        border-radius: 16px !important;
-    }
-
-    /* Блок иконок пресетов */
-    .preset-grid {
-        width: 100%;
-        display: flex;
-        flex-direction: row;
-        justify-content: center;
-        align-items: center;
-        gap: 18px;
-        margin: 8px 0 16px 0;
-        flex-wrap: nowrap;
-    }
-
-    .preset-icon {
-        width: 62px;
-        height: 62px;
-        min-width: 62px;
-        min-height: 62px;
-        border-radius: 50%;
-        background: #FFFFFF;
-        border: 1.5px solid #D9D0C5;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-decoration: none !important;
-        box-shadow: 0 5px 14px rgba(0, 0, 0, 0.04);
-        transition: all 0.18s ease;
-        overflow: hidden;
-    }
-
-    .preset-icon img {
-        width: 36px;
-        height: 36px;
-        object-fit: contain;
-        display: block;
-    }
-
-    .preset-icon:hover {
-        border-color: #B8906D;
+    .preset-row div.stButton > button:hover {
+        border-color: #B8906D !important;
         transform: translateY(-1px);
-        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 8px 18px rgba(0,0,0,0.08) !important;
     }
 
-    .preset-icon.active {
-        border: 2px solid #B8906D;
-        box-shadow: 0 0 0 3px rgba(184, 144, 109, 0.14);
+    /* Активная иконка */
+    .preset-active div.stButton > button {
+        border: 2px solid #B8906D !important;
+        box-shadow: 0 0 0 3px rgba(184, 144, 109, 0.14) !important;
     }
 
-    .preset-fallback {
-        color: #B8906D;
-        font-size: 13px;
-        font-weight: 700;
+    /* Прячем текст у иконок (оставляем только картинку) */
+    .preset-row div.stButton > button p {
+        display: none !important;
+    }
+
+    /* Картинки внутри кнопок */
+    .preset-row div.stButton > button img {
+        width: 36px !important;
+        height: 36px !important;
+        object-fit: contain !important;
+        display: block !important;
     }
 
     /* Кнопка "Свой промт" */
-    .custom-prompt-link {
-        width: 100%;
-        max-width: 360px;
-        height: 48px;
-        margin: 4px auto 2px auto;
-        border-radius: 999px;
-        border: 1.5px solid #D9D0C5;
-        background: #FFFFFF;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        text-decoration: none !important;
+    div.stButton:has(button[key="custom_prompt_btn"]) button {
+        width: 100% !important;
+        height: 48px !important;
+        border-radius: 999px !important;
+        border: 1.5px solid #D9D0C5 !important;
+        background: #FFFFFF !important;
         color: #4E5966 !important;
-        font-size: 13px;
-        font-weight: 700;
-        letter-spacing: 0.02em;
-        transition: all 0.18s ease;
-        box-shadow: 0 5px 14px rgba(0, 0, 0, 0.025);
-    }
-
-    .custom-prompt-link img {
-        max-height: 22px;
-        max-width: 74px;
-        width: auto;
-        object-fit: contain;
-        display: block;
-    }
-
-    .custom-prompt-link small {
-        color: #9A9288;
-        font-size: 12px;
-        font-weight: 500;
-        margin-left: 4px;
-        letter-spacing: 0;
-    }
-
-    .custom-prompt-link:hover {
-        border-color: #B8906D;
-        color: #B8906D !important;
-        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.07);
-        transform: translateY(-1px);
-    }
-
-    .custom-prompt-link.active {
-        border: 2px solid #B8906D;
-        box-shadow: 0 0 0 3px rgba(184, 144, 109, 0.14);
+        font-weight: 700 !important;
     }
 
     /* Главная кнопка генерации */
@@ -412,101 +336,20 @@ st.markdown(
         border: 2px dashed #CCC;
         border-radius: 24px;
     }
-
-    div[data-testid="column"]:nth-child(1) img {
-        border-radius: 12px !important;
-    }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-# --- ПРОМПТЫ ---
-BASE_PHOTO_PROMPT = (
-    "Masterpiece, 8k resolution, photorealistic interior photography, Architectural Digest style. "
-    "Maintain the original color palette and materials of the furniture strictly. "
-    "Enhance existing textures (wood grain, stone, fabric) without changing their color. "
-    "Replace flat lighting with professional cinematic studio lighting and realistic global illumination. "
-    "Add natural soft sunlight and deep realistic shadows to create depth. "
-    "High-contrast, sharp details, realistic reflections."
-)
-
-PROMPT_PRESETS = {
-    "Студия": f"Professional architectural studio lighting, balanced fills. {BASE_PHOTO_PROMPT}",
-    "День": f"Natural bright daylight from windows, soft sun rays. {BASE_PHOTO_PROMPT}",
-    "Вечер": f"Warm cozy evening light, mix of interior lamps and dusk. {BASE_PHOTO_PROMPT}",
-    "Аксессуары": f"{BASE_PHOTO_PROMPT}",
-    "Свой промт": "",
-}
-
-PRESET_NAMES = ["Студия", "День", "Вечер", "Аксессуары"]
-PRESET_PATHS = [
-    "studio.png",
-    "den.png",
-    "vecher.png",
-    "acsesoar.png",
-]
-
-# --- СОСТОЯНИЕ ---
-if "history" not in st.session_state:
-    st.session_state.history = []
-
-if "current_prompt" not in st.session_state:
-    st.session_state.current_prompt = PROMPT_PRESETS["Студия"]
-
-if "prompt_text" not in st.session_state:
-    st.session_state.prompt_text = st.session_state.current_prompt
-
-if "last_response" not in st.session_state:
-    st.session_state.last_response = ""
-
-if "_preset_idx" not in st.session_state:
-    st.session_state._preset_idx = 0
-
-# --- ОБРАБОТКА КЛИКОВ ПО HTML-ИКОНКАМ ---
-preset_param = st.query_params.get("preset")
-if preset_param is not None:
-    try:
-        preset_idx = int(preset_param)
-        if 0 <= preset_idx < len(PRESET_NAMES):
-            preset_name = PRESET_NAMES[preset_idx]
-            st.session_state.current_prompt = PROMPT_PRESETS[preset_name]
-            st.session_state.prompt_text = PROMPT_PRESETS[preset_name]
-            st.session_state._preset_idx = preset_idx
-    except Exception:
-        pass
-
-    st.query_params.clear()
-    st.rerun()
-
-if st.query_params.get("custom_prompt") == "true":
-    st.session_state.current_prompt = PROMPT_PRESETS["Свой промт"]
-    st.session_state.prompt_text = PROMPT_PRESETS["Свой промт"]
-    st.session_state._preset_idx = None
-    st.query_params.clear()
-    st.rerun()
-
-# --- ЗАПРОС К API ---
-def process_image(img_b64, user_prompt):
+# --- API ---
+def process_image(img_b64: str, user_prompt: str):
     combined_input = f"{user_prompt}|||data:image/jpeg;base64,{img_b64}"
-
-    payload = {
-        "input_value": combined_input,
-        "output_type": "chat",
-        "input_type": "chat",
-    }
-
-    headers = {
-        "Authorization": f"Bearer {APPLICATION_TOKEN}",
-        "x-api-key": APPLICATION_TOKEN,
-        "Content-Type": "application/json",
-    }
-
+    payload = {"input_value": combined_input, "output_type": "chat", "input_type": "chat"}
+    headers = {"Authorization": f"Bearer {APPLICATION_TOKEN}", "x-api-key": APPLICATION_TOKEN, "Content-Type": "application/json"}
     return requests.post(BASE_URL, json=payload, headers=headers).json()
 
 # --- ШАПКА ---
 logo_b64_main = _read_b64(LOGO_PATH)
-
 st.markdown(
     f"""
     <div class="custom-header">
@@ -516,83 +359,82 @@ st.markdown(
         <img src="data:image/png;base64,{logo_b64_main}" class="header-logo">
     </div>
     """,
-    unsafe_allow_html=True,
+    unsafe_allow_html=True
 )
 
-# --- КНОПКА ВЫХОДА ---
+# --- ВЫХОД ---
 st.markdown('<div class="logout-marker"></div>', unsafe_allow_html=True)
-
 if st.button("🚪 Выйти", key="logout_btn"):
     logout()
 
 # --- РАБОЧАЯ ОБЛАСТЬ ---
-# Левая колонка уменьшена примерно до нужного размера.
-# Если нужно еще уже — уменьшить первое число.
 col_left, col_main, col_hist = st.columns([1.2, 2.75, 0.45], gap="small")
 
 with col_left:
     st.markdown('<div class="card"><b>1. Загрузка</b>', unsafe_allow_html=True)
-
     f = st.file_uploader("upload", label_visibility="collapsed")
-
     if f:
         st.image(f, use_container_width=True)
-
     st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown('<div class="card"><b>2. Освещение</b>', unsafe_allow_html=True)
 
-    # 4 круглые иконки в ряд
-    preset_html = '<div class="preset-grid">'
+    # 4 иконки в ряд (без ссылок, без query_params)
+    st.markdown('<div class="preset-row">', unsafe_allow_html=True)
 
-    for idx, name in enumerate(PRESET_NAMES):
-        icon_src = image_src(PRESET_PATHS[idx])
-        active_class = " active" if st.session_state.get("_preset_idx") == idx else ""
+    # Делаем 4 колонки, в каждой — Streamlit-кнопка (но выглядит как иконка)
+    c1, c2, c3, c4 = st.columns(4, gap="small")
+    cols = [c1, c2, c3, c4]
 
-        if icon_src:
-            icon_html = f'<img src="{icon_src}" alt="{name}">'
-        else:
-            icon_html = f'<span class="preset-fallback">{name[0]}</span>'
+    for idx, preset_name in enumerate(PRESET_NAMES):
+        icon = image_src(PRESET_PATHS[idx])
 
-        preset_html += (
-            f'<a class="preset-icon{active_class}" '
-            f'href="?preset={idx}" '
-            f'target="_self" '
-            f'title="{name}">'
-            f'{icon_html}'
-            f'</a>'
-        )
+        with cols[idx]:
+            # контейнер для "active" обводки (класс навешиваем через markdown-обертку)
+            active = (st.session_state.selected_preset == preset_name)
+            if active:
+                st.markdown('<div class="preset-active">', unsafe_allow_html=True)
 
-    preset_html += "</div>"
+            # кнопка без текста — текст прячем CSS
+            if st.button(" ", key=f"preset_btn_{idx}", use_container_width=True):
+                apply_preset(preset_name)
 
-    st.markdown(preset_html, unsafe_allow_html=True)
+            # подмена содержимого кнопки на картинку (CSS не может вставить img),
+            # поэтому рисуем картинку отдельным markdown и позиционируем поверх кнопки:
+            st.markdown(
+                f"""
+                <style>
+                div[data-testid="column"]:has(button[key="preset_btn_{idx}"]) {{
+                    position: relative;
+                }}
+                div[data-testid="column"]:has(button[key="preset_btn_{idx}"]) img.preset-img-{idx} {{
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    width: 36px;
+                    height: 36px;
+                    pointer-events: none;
+                }}
+                </style>
+                """,
+                unsafe_allow_html=True
+            )
+            if icon:
+                st.markdown(f'<img class="preset-img-{idx}" src="{icon}">', unsafe_allow_html=True)
 
-    # Вытянутая кнопка "Свой промт" с svoi.png
-    svoi_src = image_src("svoi.png")
-    custom_active_class = " active" if st.session_state.get("_preset_idx") is None else ""
-
-    if svoi_src:
-        svoi_icon_html = f'<img src="{svoi_src}" alt="Свой промт">'
-    else:
-        svoi_icon_html = ""
-
-    st.markdown(
-        f"""
-        <a class="custom-prompt-link{custom_active_class}" href="?custom_prompt=true" target="_self">
-            {svoi_icon_html}
-            <span>СВОЙ ПРОМТ <small>(задание)</small></span>
-        </a>
-        """,
-        unsafe_allow_html=True,
-    )
+            if active:
+                st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown("</div>", unsafe_allow_html=True)
 
-    user_text = st.text_area(
-        "ТЗ промпта:",
-        key="prompt_text",
-        height=200,
-    )
+    # "Свой промт" (обычная streamlit-кнопка, без html в label!)
+    if st.button("СВОЙ ПРОМТ (задание)", key="custom_prompt_btn", use_container_width=True):
+        apply_custom_prompt()
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    user_text = st.text_area("ТЗ промпта:", key="prompt_text", height=200)
 
     if st.button("ГЕНЕРИРОВАТЬ AI ИЗОБРАЖЕНИЕ", use_container_width=True, type="primary"):
         if f:
@@ -600,26 +442,19 @@ with col_left:
                 try:
                     f.seek(0)
                     res = process_image(image_to_base64(f.read()), user_text)
-
                     if "outputs" in res:
                         msg = res["outputs"][0]["outputs"][0]["results"]["message"]["text"]
                         st.session_state.last_response = msg
-
                         raw_data = msg.split("|||")[1] if "|||" in msg else msg
-
                         if "base64," in raw_data:
                             raw_data = raw_data.split("base64,")[1]
-
                         img_bytes = base64.b64decode(raw_data.replace('"', "").strip())
-
                         st.session_state.history.insert(0, img_bytes)
                         st.session_state.history = st.session_state.history[:10]
-
                         st.rerun()
                     else:
                         st.error("API не вернул изображение.")
                         st.session_state.last_response = str(res)
-
                 except Exception as e:
                     st.error(f"Ошибка: {e}")
         else:
@@ -638,12 +473,11 @@ with col_main:
                 <p style="color: #ccc;">Загрузите изображение для начала работы</p>
             </div>
             """,
-            unsafe_allow_html=True,
+            unsafe_allow_html=True
         )
 
 with col_hist:
     st.markdown("<b>История</b>", unsafe_allow_html=True)
-
     for img in st.session_state.history[1:6]:
         st.image(img, use_container_width=True)
 
