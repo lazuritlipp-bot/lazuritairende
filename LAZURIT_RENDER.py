@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
-import streamlit as st
-import requests
 import base64
 from pathlib import Path
+
+import requests
+import streamlit as st
+
 
 BASE_URL = "https://lzrt-nocode.gpt.mws.ru/api/v1/run/bf1dc235-5c36-4bba-8d7e-a88cd5e19bd6?stream=false"
 
@@ -62,7 +64,24 @@ def clear_query_params():
     try:
         st.query_params.clear()
     except Exception:
-        st.experimental_set_query_params()
+        st.experimental_set_query_params(**{})
+
+
+def get_app_root() -> str:
+    # Делает абсолютный корень для ссылок, чтобы не уходить в /~/+/
+    base_path = ""
+    try:
+        base_path = st.get_option("server.baseUrlPath") or ""
+    except Exception:
+        base_path = ""
+
+    if base_path and not base_path.startswith("/"):
+        base_path = "/" + base_path
+    if not base_path:
+        base_path = "/"
+    if not base_path.endswith("/"):
+        base_path += "/"
+    return base_path
 
 
 def process_image(img_b64: str, user_prompt: str, mime: str):
@@ -83,7 +102,7 @@ def check_password():
         st.session_state.user_api_key = ""
 
     if not st.session_state.authenticated:
-        st.markdown("<style>.stApp { background-color: #0E1117; }</style>", unsafe_allow_html=True)
+        st.markdown("<style>.stApp{background-color:#0E1117;}</style>", unsafe_allow_html=True)
         st.sidebar.title("LAZURIT AI Render")
         pwd = st.sidebar.text_input("Введите код доступа:", type="password")
         if st.sidebar.button("Войти", use_container_width=True):
@@ -113,6 +132,7 @@ def apply_mode(mode_code: str):
 st.set_page_config(page_title="LAZURIT AI Render", layout="wide")
 check_password()
 APPLICATION_TOKEN = st.session_state.user_api_key
+APP_ROOT = get_app_root()
 
 if "history" not in st.session_state:
     st.session_state.history = []
@@ -126,11 +146,10 @@ if "last_response" not in st.session_state:
     st.session_state.last_response = ""
 
 st.markdown(
-"""<style>
+    """<style>
 .stApp { background-color: #E8E8E1; }
 .block-container { padding-top: 1rem !important; }
 
-/* Шапка */
 .custom-header {
     background-color: white;
     padding: 10px 30px;
@@ -148,7 +167,6 @@ st.markdown(
     object-fit: contain;
 }
 
-/* Карточки */
 .card {
     background-color: #F8F9FA;
     border-radius: 15px;
@@ -162,7 +180,6 @@ st.markdown(
     margin-bottom: 12px;
 }
 
-/* Главная кнопка */
 div.stButton > button:first-child[kind="primary"] {
     background: linear-gradient(90deg, #A78BFA 0%, #F87171 100%) !important;
     color: white !important;
@@ -172,7 +189,6 @@ div.stButton > button:first-child[kind="primary"] {
     font-weight: bold !important;
 }
 
-/* Пустой результат */
 .empty-result-card {
     height: 600px;
     display:flex;
@@ -200,18 +216,18 @@ div.stButton > button:first-child[kind="primary"] {
     box-shadow:
         6px 6px 14px rgba(0,0,0,0.18),
         -6px -6px 14px rgba(255,255,255,0.90);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-decoration: none;
-    user-select: none;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-decoration:none;
+    user-select:none;
     -webkit-tap-highlight-color: transparent;
 }
 .icon-btn img {
     width: 56px;
     height: 56px;
     object-fit: contain;
-    display: block;
+    display:block;
 }
 
 /* Не нужно сейчас (заглушено)
@@ -254,17 +270,15 @@ with col_left:
     for code in BUTTON_ORDER:
         label, icon_file, _add = BUTTONS[code]
         icon_path = ROOT / icon_file
-
         if not icon_path.exists():
             missing.append(icon_file)
             continue
 
         icon_url = file_to_data_url(icon_path)
-        active_cls = "active" if st.session_state.selected_mode == code else ""
 
-        # Важно: в одну строку, без отступов/переносов (иначе Streamlit может показать как код)
+        # КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: абсолютный путь (через APP_ROOT), а не "?preset=..."
         tiles.append(
-            f'<a class="icon-btn {active_cls}" href="?preset={code}" title="{label}">'
+            f'<a class="icon-btn" href="{APP_ROOT}?preset={code}" title="{label}">'
             f'<img src="{icon_url}" alt="{label}"></a>'
         )
 
