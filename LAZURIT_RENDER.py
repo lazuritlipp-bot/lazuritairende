@@ -9,10 +9,10 @@ from st_clickable_images import clickable_images
 # --- КОНФИГУРАЦИЯ ---
 BASE_URL = "https://lzrt-nocode.gpt.mws.ru/api/v1/run/bf1dc235-5c36-4bba-8d7e-a88cd5e19bd6?stream=false"
 
-APP_DIR = Path(__file__).resolve().parent
-LOGO_PATH = APP_DIR / "logo2.png"
+ROOT = Path.cwd()  # на Streamlit Cloud это обычно корень репозитория
+LOGO_PATH = ROOT / "logo2.png"
 
-# Название -> (файл иконки, добавка к промпту)
+# Название -> (файл, добавка к промпту)
 BUTTON_CONFIG = {
     "Дневной": ("den.png", "Natural bright daylight from windows, soft sun rays."),
     "Студийный": ("studio.png", "Professional architectural studio lighting, balanced fills."),
@@ -38,6 +38,21 @@ def img_to_data_url(path: Path) -> str:
     suffix = path.suffix.lower()
     mime = "image/png" if suffix == ".png" else "image/jpeg"
     return f"data:{mime};base64,{b64}"
+
+
+def image_to_base64(image_bytes: bytes) -> str:
+    return base64.b64encode(image_bytes).decode("utf-8")
+
+
+def process_image(img_b64: str, user_prompt: str, mime: str):
+    combined_input = f"{user_prompt}|||data:{mime};base64,{img_b64}"
+    payload = {"input_value": combined_input, "output_type": "chat", "input_type": "chat"}
+    headers = {
+        "Authorization": f"Bearer {APPLICATION_TOKEN}",
+        "x-api-key": APPLICATION_TOKEN,
+        "Content-Type": "application/json",
+    }
+    return requests.post(BASE_URL, json=payload, headers=headers).json()
 
 
 # --- СИСТЕМА ЛИЧНЫХ ДОСТУПОВ ---
@@ -75,39 +90,37 @@ st.markdown(
 .stApp { background-color: #E8E8E1; }
 .block-container { padding-top: 1rem !important; }
 
-.custom-header {
+.custom-header{
     background-color: white;
     padding: 10px 30px;
     border-radius: 12px;
-    display: flex;
+    display:flex;
     justify-content: space-between;
-    align-items: center;
+    align-items:center;
     margin-bottom: 20px;
     border: 1px solid #D1D1D1;
     min-height: 90px;
 }
-
-.header-logo {
+.header-logo{
     height: 90px !important;
     width: auto !important;
     object-fit: contain;
 }
 
-.card {
+.card{
     background-color: #F8F9FA;
     border-radius: 15px;
     padding: 20px;
     border: 1px solid #E0E0E0;
     margin-bottom: 15px;
 }
-
-.card > b {
-    color: #000000 !important;
-    display: block;
+.card > b{
+    color:#000 !important;
+    display:block;
     margin-bottom: 12px;
 }
 
-div.stButton > button:first-child[kind="primary"] {
+div.stButton > button:first-child[kind="primary"]{
     background: linear-gradient(90deg, #A78BFA 0%, #F87171 100%) !important;
     color: white !important;
     border: none !important;
@@ -116,14 +129,14 @@ div.stButton > button:first-child[kind="primary"] {
     font-weight: bold !important;
 }
 
-.empty-result-card {
+.empty-result-card{
     height: 600px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    color: #888;
-    border: 2px dashed #CCC;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    color:#888;
+    border:2px dashed #CCC;
 }
 </style>
 """,
@@ -136,31 +149,20 @@ BASE_PHOTO_PROMPT = (
     "Maintain the original color palette and materials of the furniture strictly. Enhance existing textures "
     "(wood grain, stone, fabric) without changing their color. Replace flat lighting with professional cinematic "
     "studio lighting and realistic global illumination. Add natural soft sunlight and deep realistic shadows to create depth. "
-    "High-contrast, sharp details, realistic reflections on surfaces. Architectural Digest style. "
-    "NO 3D render look, NO flat textures."
+    "High-contrast, sharp details, realistic reflections on surfaces. Ensure 100% photorealism, Architectural Digest style."
 )
 
+# --- STATE ---
 if "history" not in st.session_state:
     st.session_state.history = []
 if "current_prompt" not in st.session_state:
     st.session_state.current_prompt = BASE_PHOTO_PROMPT
-if "custom_prompt" not in st.session_state:
-    st.session_state.custom_prompt = ""
 if "selected_mode" not in st.session_state:
     st.session_state.selected_mode = "Дневной"
+if "custom_prompt" not in st.session_state:
+    st.session_state.custom_prompt = ""
 if "last_response" not in st.session_state:
     st.session_state.last_response = ""
-
-
-def process_image(img_b64: str, user_prompt: str, mime: str):
-    combined_input = f"{user_prompt}|||data:{mime};base64,{img_b64}"
-    payload = {"input_value": combined_input, "output_type": "chat", "input_type": "chat"}
-    headers = {
-        "Authorization": f"Bearer {APPLICATION_TOKEN}",
-        "x-api-key": APPLICATION_TOKEN,
-        "Content-Type": "application/json",
-    }
-    return requests.post(BASE_URL, json=payload, headers=headers).json()
 
 
 # --- ШАПКА ---
@@ -189,24 +191,25 @@ with col_left:
 
     st.markdown('<div class="card"><b>2. Освещение</b>', unsafe_allow_html=True)
 
-    # --- ИКОНКИ-КНОПКИ ---
+    # --- ИКОНКИ-ПЛИТКИ ---
     missing = []
     icon_urls = []
     for name in BUTTON_ORDER:
         filename, _ = BUTTON_CONFIG[name]
-        p = APP_DIR / filename
+        p = ROOT / filename
         if not p.exists():
-            missing.append(str(p.name))
-            icon_urls.append("")  # чтобы индексы совпадали
+            missing.append(filename)
+            icon_urls.append("")
         else:
             icon_urls.append(img_to_data_url(p))
 
     if missing:
-        st.error("Не найдены файлы иконок: " + ", ".join(missing))
+        st.error("Не найдены файлы: " + ", ".join(missing))
+        st.caption(f"Проверка пути: ROOT = {ROOT}")
     else:
         clicked = clickable_images(
             icon_urls,
-            titles=BUTTON_ORDER,  # подсказка при наведении
+            titles=BUTTON_ORDER,
             div_style="""
                 display:flex;
                 gap:14px;
@@ -250,10 +253,9 @@ with col_left:
 
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # Промпт
     user_text = st.text_area("ТЗ промпта:", value=st.session_state.current_prompt, height=200)
 
-    # если выбран "Свой" — запоминаем то, что пользователь пишет
+    # сохраняем "Свой"
     if st.session_state.selected_mode == "Свой":
         st.session_state.custom_prompt = user_text
 
@@ -265,7 +267,7 @@ with col_left:
                 try:
                     f.seek(0)
                     mime = getattr(f, "type", None) or "image/jpeg"
-                    img_b64 = base64.b64encode(f.read()).decode("utf-8")
+                    img_b64 = image_to_base64(f.read())
 
                     res = process_image(img_b64, user_text, mime=mime)
 
