@@ -112,7 +112,7 @@ def check_password():
                     st.error("❌ Код не опознан")
         st.stop()
 
-# Запускаем проверку пароля перед показом основного интерфейса
+# Запускаем проверку пароля
 check_password()
 APPLICATION_TOKEN = st.session_state.user_api_key
 
@@ -129,6 +129,23 @@ st.markdown("""
     iframe[title*="streamlit_image_select"] { background: transparent !important; }
     div.stButton > button:first-child[kind="primary"] { background: linear-gradient(90deg, #A78BFA 0%, #F87171 100%) !important; color: white !important; border: none !important; height: 55px !important; font-size: 18px !important; font-weight: bold !important; }
     .empty-result-card { height: 600px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #888; border: 2px dashed #CCC; }
+    
+    /* Кнопка выхода */
+    .logout-btn button {
+        background: transparent !important;
+        color: #999 !important;
+        border: 1px solid #CCC !important;
+        border-radius: 10px !important;
+        height: 42px !important;
+        font-size: 14px !important;
+        font-weight: 500 !important;
+        transition: all 0.2s ease;
+    }
+    .logout-btn button:hover {
+        background: #FF4B4B !important;
+        color: white !important;
+        border-color: #FF4B4B !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -161,14 +178,30 @@ def process_image(img_b64, user_prompt):
     headers = {"Authorization": f"Bearer {APPLICATION_TOKEN}", "x-api-key": APPLICATION_TOKEN, "Content-Type": "application/json"}
     return requests.post(BASE_URL, json=payload, headers=headers).json()
 
-# --- ШАПКА ---
+def logout():
+    for key in ['authenticated', 'user_role', 'user_api_key', 'history', 'last_response', 'current_prompt', '_preset_idx']:
+        if key in st.session_state:
+            del st.session_state[key]
+    st.rerun()
+
+# --- ШАПКА С КНОПКОЙ ВЫХОДА ---
 logo_b64_main = _read_b64(LOGO_PATH)
-st.markdown(f"""
-    <div class="custom-header">
-        <div style="color: #444; font-size: 18px;"><b>{st.session_state.user_role}!</b> Добро пожаловать в Lazurit AI Render</div>
-        <img src="data:image/jpeg;base64,{logo_b64_main}" class="header-logo">
-    </div>
-    """, unsafe_allow_html=True)
+
+col_header, col_logout = st.columns([9, 1])
+
+with col_header:
+    st.markdown(f"""
+        <div class="custom-header">
+            <div style="color: #444; font-size: 18px;"><b>{st.session_state.user_role}!</b> Добро пожаловать в Lazurit AI Render</div>
+            <img src="data:image/jpeg;base64,{logo_b64_main}" class="header-logo">
+        </div>
+        """, unsafe_allow_html=True)
+
+with col_logout:
+    st.markdown('<div class="logout-btn" style="margin-top: 35px;">', unsafe_allow_html=True)
+    if st.button("🚪 Выйти", key="logout_btn", use_container_width=True):
+        logout()
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # --- РАБОЧАЯ ОБЛАСТЬ ---
 col_left, col_main, col_hist = st.columns([2.2, 2.2, 0.6])
