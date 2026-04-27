@@ -114,6 +114,7 @@ st.markdown("""
     <style>
     .stApp { background-color: #E8E8E1; }
     
+    /* ПОЛНОСТЬЮ СКРЫВАЕМ ВЕРХНЮЮ ПОЛОСУ STREAMLIT */
     header, [data-testid="stHeader"], [data-testid="stToolbar"] {
         display: none !important;
         visibility: hidden !important;
@@ -147,7 +148,7 @@ st.markdown("""
         transform: translateY(-50%);
     }
     
-    /* Кнопка выхода */
+    /* Кнопка выхода внутри шапки */
     div.element-container:has(.logout-marker) { display: none; }
     div.element-container:has(.logout-marker) + div.element-container {
         margin-top: -58px !important;
@@ -166,25 +167,109 @@ st.markdown("""
         height: 32px !important;
         padding: 0 14px !important;
         font-size: 13.5px !important;
+        transition: all 0.2s;
+    }
+    div.element-container:has(.logout-marker) + div.element-container button:hover {
+        background: #FF4B4B !important;
+        color: white !important;
+        border-color: #FF4B4B !important;
     }
 
-    .card { background-color: #F8F9FA; border-radius: 20px; padding: 20px; border: 1px solid #E0E0E0; margin-bottom: 15px; }
+    /* СКРУГЛЕНИЯ И СТИЛИ КАРТОЧЕК */
+    .card { 
+        background-color: #F8F9FA; 
+        border-radius: 20px;
+        padding: 20px; 
+        border: 1px solid #E0E0E0; 
+        margin-bottom: 15px; 
+    }
     .card > b { color: #000000 !important; }
     
-    /* Стилизация первого набора иконок (КРУГЛЫЕ) */
-    div[data-testid="column"]:nth-child(1) div[data-testid="stVerticalBlock"] > div:nth-child(3) iframe {
-        height: 90px !important;
+    /* Скругление текстового поля и загрузчика */
+    div[data-testid="stTextArea"] > div > div > textarea { border-radius: 16px !important; }
+    div[data-testid="stFileUploader"] > section { border-radius: 16px !important; }
+    
+    /* ОКРУГЛЕНИЕ ИКОНОК IMAGE_SELECT В КРУЖОЧКИ */
+    iframe[title*="streamlit_image_select"] { 
+        background: transparent !important; 
+        border-radius: 16px !important;
+        overflow: hidden !important;
     }
     
-    /* Глобальный хак для скругления иконок в iframe */
-    iframe[title*="streamlit_image_select"] {
-        border-radius: 50px !important; /* Для круглых */
+    /* КРУГЛЫЕ ИКОНКИ - 4 В РЯД */
+    div[data-testid="stHorizontalBlock"] {
+        gap: 10px !important;
+        justify-content: flex-start !important;
     }
-
-    /* Кнопка генерации */
+    
+    div[data-testid="stHorizontalBlock"] button { 
+        background-color: #FFFFFF !important; 
+        color: #333 !important; 
+        border: 2px solid #D4C4B0 !important; 
+        font-size: 12px !important; 
+        padding: 0 !important;
+        border-radius: 50% !important; /* КРУГЛЫЕ КНОПКИ */
+        width: 70px !important;
+        height: 70px !important;
+        min-width: 70px !important;
+        min-height: 70px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        transition: all 0.2s !important;
+    }
+    
+    div[data-testid="stHorizontalBlock"] button:hover {
+        border-color: #A78BFA !important;
+        background-color: #F5F0FF !important;
+        transform: scale(1.05);
+    }
+    
+    div[data-testid="stHorizontalBlock"] button img {
+        width: 36px !important;
+        height: 36px !important;
+        object-fit: contain !important;
+    }
+    
+    /* КНОПКА СВОЙ ПРОМТ - ВЫТЯНУТАЯ С ИКОНКОЙ */
+    div.stButton:has(button[key="custom_prompt_btn"]) {
+        width: 100% !important;
+        margin-top: 12px !important;
+    }
+    
+    div.stButton:has(button[key="custom_prompt_btn"]) button {
+        background-color: #FFFFFF !important;
+        color: #666 !important;
+        border: 2px solid #D4C4B0 !important;
+        border-radius: 50px !important; /* ВЫТЯНУТЫЙ ОВАЛ */
+        height: 50px !important;
+        font-size: 14px !important;
+        font-weight: 500 !important;
+        width: 100% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 10px !important;
+        transition: all 0.2s !important;
+    }
+    
+    div.stButton:has(button[key="custom_prompt_btn"]) button:hover {
+        border-color: #A78BFA !important;
+        background-color: #F5F0FF !important;
+        color: #A78BFA !important;
+    }
+    
+    div.stButton:has(button[key="custom_prompt_btn"]) button span {
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+    }
+    
+    /* Главная кнопка генерации */
     div.stButton > button:first-child[kind="primary"] { 
         background: linear-gradient(90deg, #A78BFA 0%, #F87171 100%) !important; 
         color: white !important; 
+        border: none !important; 
         height: 55px !important; 
         font-size: 17px !important; 
         font-weight: bold !important; 
@@ -192,8 +277,19 @@ st.markdown("""
     }
     
     .empty-result-card { 
-        height: 600px; display: flex; flex-direction: column; align-items: center; 
-        justify-content: center; color: #888; border: 2px dashed #CCC; border-radius: 24px;
+        height: 600px; 
+        display: flex; 
+        flex-direction: column; 
+        align-items: center; 
+        justify-content: center; 
+        color: #888; 
+        border: 2px dashed #CCC; 
+        border-radius: 24px;
+    }
+    
+    /* Скругление загруженных картинок в левой колонке */
+    div[data-testid="column"]:nth-child(1) img {
+        border-radius: 12px !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -244,51 +340,56 @@ if st.button("🚪 Выйти", key="logout_btn"):
 col_left, col_main, col_hist = st.columns([1.0, 3.5, 0.6])
 
 with col_left:
-    # 1. Загрузка
     st.markdown('<div class="card"><b>1. Загрузка</b>', unsafe_allow_html=True)
     f = st.file_uploader("upload", label_visibility="collapsed")
     if f: st.image(f, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # 2. Освещение
     st.markdown('<div class="card"><b>2. Освещение</b>', unsafe_allow_html=True)
     
-    # ПЕРВЫЙ РЯД: 4 круглые иконки
+    # 4 иконки в ряд + svoi.png для кнопки "Свой промт"
     PRESET_NAMES = ["Студия", "День", "Вечер", "Аксессуары"]
-    PRESET_PATHS = ["studio.png", "den.png", "vecher.png", "acsesoar.png"]
+    PRESET_PATHS = [
+        "studio.png",
+        "den.png",
+        "vecher.png",
+        "acsesoar.png",
+    ]
 
     selected_idx = image_select(
         label="",
         images=PRESET_PATHS,
+        captions=None,
         use_container_width=False,
         return_value="index",
-        key="presets_circle"
+        key="preset_image_select",
     )
 
-    if selected_idx is not None and st.session_state.get("_last_idx") != selected_idx:
+    if selected_idx is not None and st.session_state.get("_preset_idx") != selected_idx:
         st.session_state.current_prompt = PROMPT_PRESETS[PRESET_NAMES[selected_idx]]
-        st.session_state._last_idx = selected_idx
-        st.session_state._custom_mode = False
+        st.session_state._preset_idx = selected_idx
         st.rerun()
 
-    # ВТОРОЙ РЯД: Кнопка Свой промт (вытянутая иконка svoi.png)
-    selected_custom = image_select(
-        label="",
-        images=["svoi.png"],
-        use_container_width=True,
-        key="custom_btn_img"
+    # Кнопка "Свой промт" с иконкой - отдельно под иконками
+    st.markdown(
+        """
+        <div style="width: 100%; margin-top: 12px;">
+        """,
+        unsafe_allow_html=True
     )
     
-    # Если кликнули по иконке svoi.png
-    if selected_custom == "svoi.png" and not st.session_state.get("_custom_mode"):
+    # Читаем иконку для кнопки "Свой промт"
+    svoi_icon_b64 = _read_b64("svoi.png")
+    svoi_icon_html = f'<img src="data:image/png;base64,{svoi_icon_b64}" style="width: 20px; height: 20px;" />' if svoi_icon_b64 else '✏️'
+    
+    if st.button(f"{svoi_icon_html} Свой промт (задание)", key="custom_prompt_btn", use_container_width=True):
         st.session_state.current_prompt = PROMPT_PRESETS.get("Свой промт", "")
-        st.session_state._custom_mode = True
-        st.session_state._last_idx = None
+        st.session_state._preset_idx = None
         st.rerun()
-        
+    
+    st.markdown('</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # ТЗ промпта
     user_text = st.text_area("ТЗ промпта:", value=st.session_state.current_prompt, height=200)
 
     if st.button("ГЕНЕРИРОВАТЬ AI ИЗОБРАЖЕНИЕ", use_container_width=True, type="primary"):
