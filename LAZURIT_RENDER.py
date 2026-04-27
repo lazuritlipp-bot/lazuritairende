@@ -91,35 +91,35 @@ def check_password():
                 font-size: 16px !important;
             }}
 
-           /* КНОПКА ВОЙТИ - ПОЛНАЯ ШИРИНА */
-div[data-testid="stForm"] [data-testid="stFormSubmitButton"] {
-    width: 100% !important;
-    margin-top: 15px !important;
-}
-
-div[data-testid="stForm"] [data-testid="stFormSubmitButton"] > div,
-div[data-testid="stForm"] [data-testid="stFormSubmitButton"] > div > div,
-div[data-testid="stForm"] [data-testid="stFormSubmitButton"] > div > div > div {
-    width: 100% !important;
-}
-
-div[data-testid="stForm"] [data-testid="stFormSubmitButton"] button {
-    background: linear-gradient(90deg, #A886F4 0%, #F17581 100%) !important;
-    color: #FFFFFF !important;
-    border: none !important;
-    height: 62px !important;
-    width: 100% !important;
-    min-width: 100% !important;
-    font-weight: 600 !important;
-    font-size: 19px !important;
-    border-radius: 14px !important;
-    transition: all 0.2s ease;
-}
-
-div[data-testid="stForm"] [data-testid="stFormSubmitButton"] button:hover {
-    opacity: 0.92;
-    transform: scale(1.01);
-}
+                      /* КНОПКА ВОЙТИ - ПОЛНАЯ ШИРИНА */
+            div[data-testid="stForm"] [data-testid="stFormSubmitButton"] {
+                width: 100% !important;
+                margin-top: 15px !important;
+            }
+            
+            div[data-testid="stForm"] [data-testid="stFormSubmitButton"] button {
+                background: linear-gradient(90deg, #A886F4 0%, #F17581 100%) !important;
+                color: #FFFFFF !important;
+                border: none !important;
+                height: 62px !important;
+                width: 100% !important;
+                font-weight: 600 !important;
+                font-size: 19px !important;
+                border-radius: 14px !important;
+                transition: all 0.2s ease;
+                display: block !important;
+            }
+            
+            div[data-testid="stForm"] [data-testid="stFormSubmitButton"] button p {
+                width: 100% !important;
+                text-align: center !important;
+                margin: 0 !important;
+            }
+            
+            div[data-testid="stForm"] [data-testid="stFormSubmitButton"] button:hover {
+                opacity: 0.92;
+                transform: scale(1.01);
+            }
             }}
 
             .login-logo {{
