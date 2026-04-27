@@ -35,18 +35,20 @@ def check_password():
         st.markdown(
             f"""
             <style>
-            /* Скрываем лишнее на логине */
+            /* Скрываем элементы навигации на экране логина */
             [data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"], header {{ display: none !important; }}
             .stApp {{ {bg_css} }}
             
-            /* Центрирование контейнера формы */
+            /* Жесткое центрирование формы авторизации */
             .block-container {{
                 padding-top: 0 !important;
                 max-width: 100% !important;
                 display: flex !important;
                 justify-content: center !important;
                 align-items: center !important;
-                min-height: 100vh !important;
+                height: 100vh !important;
+                position: fixed !important;
+                top: 0; left: 0; right: 0; bottom: 0;
             }}
 
             /* Карточка логина */
@@ -55,40 +57,29 @@ def check_password():
                 background: rgba(255, 255, 255, 0.95) !important;
                 backdrop-filter: blur(15px);
                 border-radius: 22px !important;
-                padding: 35px !important;
-                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4) !important;
+                padding: 40px !important;
+                box-shadow: 0 25px 65px rgba(0, 0, 0, 0.5) !important;
                 border: 1px solid rgba(255, 255, 255, 0.3) !important;
+                margin: auto !important;
             }}
             
             div[data-testid="stForm"] label {{
                 color: #000000 !important;
                 font-weight: 600 !important;
-                font-size: 14px !important;
             }}
 
-            /* Поле ввода */
+            /* Стилизация инпута */
             div[data-testid="stForm"] [data-testid="stTextInput"] > div {{
                 background: white !important;
                 border: 1px solid #CCC !important;
-                border-radius: 10px !important;
-                overflow: hidden !important;
+                border-radius: 12px !important;
             }}
 
             div[data-testid="stForm"] input {{
                 color: #000000 !important; 
-                background: white !important;
             }}
 
-            /* Иконка глаза */
-            div[data-testid="stForm"] [data-testid="stTextInput"] button {{
-                color: #000 !important; 
-            }}
-            
-            div[data-testid="stForm"] [data-testid="stTextInput"] button svg {{
-                fill: #000 !important; 
-            }}
-
-            /* Кнопка во всю длину */
+            /* Кнопка войти - на всю ширину */
             div[data-testid="stForm"] [data-testid="stFormSubmitButton"] {{
                 width: 100% !important;
             }}
@@ -101,18 +92,19 @@ def check_password():
                 font-weight: 600 !important;
                 border-radius: 10px !important;
                 width: 100% !important;
+                margin-top: 10px;
             }}
 
             .login-logo {{
                 display: block;
                 margin: 0 auto 15px;
-                max-width: 220px;
+                max-width: 240px;
             }}
             .login-subtitle {{
                 color: #333;
                 text-align: center;
                 font-size: 14px;
-                margin-bottom: 20px;
+                margin-bottom: 25px;
             }}
             </style>
             """,
@@ -143,15 +135,15 @@ st.set_page_config(page_title="LAZURIT AI Render", layout="wide")
 check_password()
 APPLICATION_TOKEN = st.session_state.user_api_key
 
-# Возвращаем ваш оригинальный цвет фона и стиль основного интерфейса
+# ВОЗВРАЩАЕМ ОРИГИНАЛЬНЫЙ ЦВЕТ ФОНА И ИНТЕРФЕЙСА (#E8E8E1)
 st.markdown("""
     <style>
-    .stApp { background-color: #ffffff; }
+    .stApp { background-color: #E8E8E1; }
     
     [data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"], header { display: flex !important; }
     
     .block-container { 
-        padding-top: 2rem !important; 
+        padding-top: 1.5rem !important; 
         max-width: 100% !important; 
         display: block !important;
         height: auto !important;
@@ -231,7 +223,7 @@ def process_image(img_b64, user_prompt):
 logo_b64_main = _read_b64(LOGO_PATH)
 st.markdown(f"""
     <div class="custom-header">
-        <div style="color: #333; font-size: 20px;"><b>{st.session_state.user_role},</b> добро пожаловать!</div>
+        <div style="color: #333; font-size: 20px;"><b>{st.session_state.user_role},</b> добро пожаловать в Lazurit AI Render</div>
         <img src="data:image/png;base64,{logo_b64_main}" class="header-logo">
     </div>
     """, unsafe_allow_html=True)
@@ -248,6 +240,7 @@ with col_left:
     PRESET_NAMES = ["Студия", "День", "Вечер", "Аксуары"]
     PRESET_PATHS = ["icons/studio.png", "icons/den.png", "icons/vecher.png", "icons/acsesoar.png"]
 
+    # Использование image_select для иконок
     selected_idx = image_select(
         label="",
         images=PRESET_PATHS,
