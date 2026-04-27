@@ -83,7 +83,7 @@ def check_password():
             /* Поле ввода — тёмное */
             div[data-testid="stForm"] input {{
                 background: rgba(255, 255, 255, 0.06) !important;
-                color: #a8a8a8 !important;
+                color: #0a0a0a !important;
                 border: 1px solid rgba(255, 255, 255, 0.12) !important;
                 border-radius: 10px !important;
                 height: 46px !important;
