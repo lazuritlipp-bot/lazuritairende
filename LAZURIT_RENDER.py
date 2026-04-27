@@ -163,7 +163,7 @@ st.markdown(f"""
                 <b>{st.session_state.user_role}!</b> Добро пожаловать в Lazurit AI Render
             </div>
             <a href="?logout=true" target="_self" class="btn-logout">
-                🚪 Выйти из системы
+                🚪 Выйти
             </a>
         </div>
         <img src="data:image/png;base64,{logo_b64_main}" class="header-logo">
