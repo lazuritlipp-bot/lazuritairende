@@ -50,12 +50,12 @@ def check_password():
                 top: 0; left: 0; right: 0; bottom: 0;
             }}
 
-            /* КАРТОЧКА ЛОГИНА - ТЕМНАЯ (согласно image_94e9b8.png) */
+            /* КАРТОЧКА ЛОГИНА - ТЕМНАЯ */
             div[data-testid="stForm"] {{
                 width: 400px !important;
-                background: #333333 !important; /* Темный цвет карточки */
+                background: #333333 !important;
                 border-radius: 20px !important;
-                padding: 30px !important;
+                padding: 35px !important;
                 box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5) !important;
                 border: none !important;
                 margin: auto !important;
@@ -68,7 +68,7 @@ def check_password():
                 font-size: 14px !important;
             }}
 
-            /* ИНПУТ - СВЕТЛЫЙ (согласно image_955b31.png) */
+            /* ИНПУТ - СВЕТЛЫЙ */
             div[data-testid="stForm"] [data-testid="stTextInput"] > div {{
                 background: #F0F2F6 !important;
                 border: none !important;
@@ -80,36 +80,42 @@ def check_password():
                 color: #333333 !important;
             }}
 
-            /* КНОПКА ВОЙТИ - МАЛЕНЬКАЯ И ВЛЕВО (согласно image_94f936.jpg) */
+            /* КНОПКА ВОЙТИ - УВЕЛИЧЕНА И ОТЦЕНТРИРОВАНА */
             div[data-testid="stForm"] [data-testid="stFormSubmitButton"] {{
-                text-align: left !important;
-                margin-top: 20px !important;
+                text-align: center !important;
+                margin-top: 25px !important;
+                width: 100% !important;
             }}
             
             div[data-testid="stForm"] [data-testid="stFormSubmitButton"] button {{
                 background: linear-gradient(135deg, #A886F4 0%, #F17581 100%) !important;
                 color: white !important;
                 border: none !important;
-                height: 42px !important;
-                padding: 0 35px !important;
-                font-weight: 500 !important;
-                font-size: 15px !important;
-                border-radius: 10px !important;
-                width: auto !important;
-                transition: transform 0.2s;
+                height: 48px !important;
+                width: 100% !important; /* Кнопка теперь на всю ширину карточки */
+                font-weight: 600 !important;
+                font-size: 16px !important;
+                border-radius: 12px !important;
+                transition: transform 0.2s, opacity 0.2s;
+                display: block !important;
+            }}
+            
+            div[data-testid="stForm"] [data-testid="stFormSubmitButton"] button:hover {{
+                opacity: 0.9;
+                transform: translateY(-1px);
             }}
 
             .login-logo {{
                 display: block;
-                margin: 0 auto 10px;
-                max-width: 200px;
-                filter: brightness(1.5); /* Чтобы лого на темном было видно */
+                margin: 0 auto 15px;
+                max-width: 220px;
+                filter: brightness(1.2);
             }}
             .login-subtitle {{
                 color: #CCCCCC;
                 text-align: center;
-                font-size: 13px;
-                margin-bottom: 20px;
+                font-size: 14px;
+                margin-bottom: 25px;
             }}
             </style>
             """,
@@ -190,7 +196,6 @@ with col_left:
     st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown('<div class="card"><b>2. Освещение</b>', unsafe_allow_html=True)
-    # Упрощенный выбор для примера
     preset = st.radio("Пресеты", ["Студия", "День", "Вечер", "Свой промт"], horizontal=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
