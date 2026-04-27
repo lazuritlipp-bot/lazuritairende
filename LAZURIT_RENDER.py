@@ -114,6 +114,7 @@ st.markdown("""
     <style>
     .stApp { background-color: #E8E8E1; }
     
+    /* ПОЛНОСТЬЮ СКРЫВАЕМ ВЕРХНЮЮ ПОЛОСУ STREAMLIT */
     header, [data-testid="stHeader"], [data-testid="stToolbar"] {
         display: none !important;
         visibility: hidden !important;
@@ -161,7 +162,7 @@ st.markdown("""
         background: transparent !important;
         color: #666 !important;
         border: 1px solid #ccc !important;
-        border-radius: 6px !important;
+        border-radius: 8px !important;
         min-height: 32px !important;
         height: 32px !important;
         padding: 0 14px !important;
@@ -174,22 +175,61 @@ st.markdown("""
         border-color: #FF4B4B !important;
     }
 
-    .card { background-color: #F8F9FA; border-radius: 15px; padding: 20px; border: 1px solid #E0E0E0; margin-bottom: 15px; }
-    .card > b { color: #000000 !important; }
-    div[data-testid="stHorizontalBlock"] button { background-color: #FFFFFF !important; color: #333 !important; border: 1px solid #CCC !important; font-size: 12px !important; padding: 4px 6px !important; }
-    iframe[title*="streamlit_image_select"] { background: transparent !important; }
-    div.stButton > button:first-child[kind="primary"] { background: linear-gradient(90deg, #A78BFA 0%, #F87171 100%) !important; color: white !important; border: none !important; height: 55px !important; font-size: 18px !important; font-weight: bold !important; }
-    .empty-result-card { height: 600px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #888; border: 2px dashed #CCC; }
-
-    /* === ОКРУГЛЫЕ ИКОНКИ === */
-    iframe[title*="streamlit_image_select"] img {
-        border-radius: 18px !important;
-        transition: border-radius 0.3s ease;
+    /* СКРУГЛЕНИЯ И СТИЛИ КАРТОЧЕК */
+    .card { 
+        background-color: #F8F9FA; 
+        border-radius: 20px; /* Увеличено скругление карточек */
+        padding: 20px; 
+        border: 1px solid #E0E0E0; 
+        margin-bottom: 15px; 
     }
-    iframe[title*="streamlit_image_select"] div[role="option"],
-    iframe[title*="streamlit_image_select"] button {
-        border-radius: 18px !important;
+    .card > b { color: #000000 !important; }
+    
+    /* Скругление текстового поля и загрузчика */
+    div[data-testid="stTextArea"] > div > div > textarea { border-radius: 16px !important; }
+    div[data-testid="stFileUploader"] > section { border-radius: 16px !important; }
+    
+    /* Округление самого контейнера image_select */
+    iframe[title*="streamlit_image_select"] { 
+        background: transparent !important; 
+        border-radius: 16px !important;
         overflow: hidden !important;
+    }
+    
+    /* Скругление кнопок */
+    div[data-testid="stHorizontalBlock"] button { 
+        background-color: #FFFFFF !important; 
+        color: #333 !important; 
+        border: 1px solid #CCC !important; 
+        font-size: 12px !important; 
+        padding: 4px 6px !important; 
+        border-radius: 10px !important;
+    }
+    
+    div.stButton > button:first-child[kind="primary"] { 
+        background: linear-gradient(90deg, #A78BFA 0%, #F87171 100%) !important; 
+        color: white !important; 
+        border: none !important; 
+        height: 55px !important; 
+        font-size: 17px !important; 
+        font-weight: bold !important; 
+        border-radius: 16px !important; /* Круглая главная кнопка */
+    }
+    
+    .empty-result-card { 
+        height: 600px; 
+        display: flex; 
+        flex-direction: column; 
+        align-items: center; 
+        justify-content: center; 
+        color: #888; 
+        border: 2px dashed #CCC; 
+        border-radius: 24px;
+    }
+    
+    /* Скругление загруженных картинок в левой колонке */
+    div[data-testid="column"]:nth-child(1) img {
+        border-radius: 12px !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -236,8 +276,9 @@ st.markdown('<div class="logout-marker"></div>', unsafe_allow_html=True)
 if st.button("🚪 Выйти", key="logout_btn"):
     logout()
 
-# --- РАБОЧАЯ ОБЛАСТЬ (сужаем правую часть) ---
-col_left, col_main, col_hist = st.columns([2, 1.2, 0.4])
+# --- РАБОЧАЯ ОБЛАСТЬ (ИЗМЕНЕННЫЕ ПРОПОРЦИИ КОЛОНОК) ---
+# [1.0, 3.5, 0.6] -> Левая колонка стала в 2 раза уже, центральная намного шире
+col_left, col_main, col_hist = st.columns([1.0, 3.5, 0.6])
 
 with col_left:
     st.markdown('<div class="card"><b>1. Загрузка</b>', unsafe_allow_html=True)
@@ -297,7 +338,7 @@ with col_left:
 
 with col_main:
     if st.session_state.history:
-        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.markdown('<div class="card" style="padding: 10px;">', unsafe_allow_html=True)
         st.image(st.session_state.history[0], use_container_width=True, caption="Результат")
         st.markdown('</div>', unsafe_allow_html=True)
     else:
