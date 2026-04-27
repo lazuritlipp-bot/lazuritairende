@@ -178,8 +178,8 @@ st.markdown("""
     /* СКРУГЛЕНИЯ И СТИЛИ КАРТОЧЕК */
     .card { 
         background-color: #F8F9FA; 
-        border-radius: 20px; /* Увеличено скругление карточек */
-        padding: 20px; 
+        border-radius: 40px; /* Увеличено скругление карточек */
+        padding: 40px; 
         border: 1px solid #E0E0E0; 
         margin-bottom: 15px; 
     }
