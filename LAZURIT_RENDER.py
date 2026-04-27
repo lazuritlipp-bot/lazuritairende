@@ -115,7 +115,7 @@ logo_b64 = get_base64_logo(LOGO_PATH)
 st.markdown(f"""
     <div class="custom-header">
         <div style="color: #444; font-size: 18px;"><b>{st.session_state.user_role}!</b> Добро пожаловать в Lazurit AI Render</div>
-        <img src="data:image/jpeg;base64,{logo_b64}" style="height: 40px;">
+        <img src="data:image/jpeg;base64,{logo_b64}" style="height: 60px;">
     </div>
     """, unsafe_allow_html=True)
 
