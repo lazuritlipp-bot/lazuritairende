@@ -37,8 +37,9 @@ def check_password():
         )
         st.markdown(f"""
             <style>
-            [data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"],
-            header, [data-testid="stHeader"] {{ display: none !important; }}
+            [data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"], header, [data-testid="stHeader"] {{
+                display: none !important;
+            }}
             .stApp {{ {bg_css} }}
             .block-container {{ padding: 0 !important; max-width: 100% !important; }}
             div[data-testid="stForm"] {{
@@ -48,7 +49,6 @@ def check_password():
                 box-shadow: 0 24px 70px rgba(0,0,0,0.55);
                 border: 1px solid rgba(255,255,255,0.08) !important; z-index: 9999;
             }}
-            div[data-testid="stForm"] label {{ color: #FFF !important; }}
             div[data-testid="stForm"] input {{
                 background: rgba(255,255,255,0.06) !important; color: #FFF !important;
                 border: 1px solid rgba(255,255,255,0.12) !important; border-radius: 10px !important;
@@ -120,148 +120,149 @@ def process_image(img_b64, user_prompt):
     return requests.post(BASE_URL, json=payload, headers=headers).json()
 
 # --- СТИЛИ ---
-st.markdown("""
+logo_b64_main = _read_b64(LOGO_PATH)
+st.markdown(f"""
     <style>
-    .stApp { background-color: #E8E8E1; }
-    header, [data-testid="stHeader"], [data-testid="stToolbar"] {
+    .stApp {{ background-color: #E8E8E1; }}
+    header, [data-testid="stHeader"], [data-testid="stToolbar"] {{
         display: none !important; visibility: hidden !important; height: 0 !important;
-    }
-    .block-container {
+    }}
+    .block-container {{
         padding-top: 1.2rem !important; max-width: 100% !important;
         padding-left: 2rem !important; padding-right: 2rem !important;
-    }
+    }}
 
-    .custom-header {
+    .custom-header {{
         background: white; padding: 15px 30px 45px 30px; border-radius: 12px;
         position: relative; border: 1px solid #D1D1D1; min-height: 100px; margin-bottom: 0;
-    }
-    .header-logo {
+    }}
+    .header-logo {{
         height: 80px !important; position: absolute; right: 30px; top: 50%; transform: translateY(-50%);
-    }
+    }}
 
     /* кнопка выхода */
-    div.element-container:has(.logout-marker) { display: none; }
-    div.element-container:has(.logout-marker) + div.element-container {
+    div.element-container:has(.logout-marker) {{ display: none; }}
+    div.element-container:has(.logout-marker) + div.element-container {{
         margin-top: -58px !important; margin-left: 30px !important;
         margin-bottom: 25px !important; position: relative; z-index: 10; width: fit-content;
-    }
-    div.element-container:has(.logout-marker) + div.element-container button {
+    }}
+    div.element-container:has(.logout-marker) + div.element-container button {{
         background: transparent !important; color: #666 !important;
         border: 1px solid #ccc !important; border-radius: 8px !important; height: 32px !important;
-    }
-    div.element-container:has(.logout-marker) + div.element-container button:hover {
+    }}
+    div.element-container:has(.logout-marker) + div.element-container button:hover {{
         background: #FF4B4B !important; color: white !important;
-    }
+    }}
 
-    .card {
+    .card {{
         background: #F8F9FA; border-radius: 20px; padding: 20px;
         border: 1px solid #E0E0E0; margin-bottom: 15px;
-    }
-    .card > b { color: #000 !important; }
+    }}
+    .card > b {{ color: #000 !important; }}
 
-    /* === ИКОНКИ-КНОПКИ: прозрачная кнопка поверх картинки === */
-    .icon-wrap {
-        display: flex; flex-direction: column; align-items: center; position: relative;
-    }
-    .icon-wrap img {
-        width: 60px !important; height: 60px !important; object-fit: contain;
-        border-radius: 50% !important; border: 2px solid #D4C4B0;
-        background: white; padding: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.04);
-        transition: all 0.2s;
-    }
-    .icon-wrap.active img {
+    /* === ВИЗУАЛ ИКОНКИ === */
+    .icon-wrap {{
+        display: flex; justify-content: center; align-items: center;
+        width: 70px; height: 70px; margin: 0 auto;
+        background: white; border: 2px solid #D4C4B0; border-radius: 50%;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+        overflow: hidden;
+    }}
+    .icon-wrap img {{
+        width: 36px; height: 36px; object-fit: contain;
+    }}
+    .icon-wrap.active {{
         border-color: #B8906D !important;
         box-shadow: 0 0 0 3px rgba(184,144,109,0.2) !important;
-    }
+    }}
 
-    /* Прозрачная кнопка ПОВЕРХ иконки */
-    .icon-wrap + div.stButton {
-        margin-top: -64px !important;
-        position: relative;
-        z-index: 20;
-    }
-    .icon-wrap + div.stButton button {
-        width: 64px !important;
-        height: 64px !important;
-        min-height: 64px !important;
-        background: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-        color: transparent !important;
-        font-size: 0 !important;
+    /* === МАГИЯ: КНОПКА ПОДНИМАЕТСЯ ПОВЕРХ ИКОНКИ === */
+    .icon-wrap + div.stButton {{
+        margin-top: -70px !important;   /* поднимаем ровно на высоту круга */
+        height: 70px !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+    }}
+    .icon-wrap + div.stButton button {{
+        width: 70px !important;
+        height: 70px !important;
+        min-height: 70px !important;
         border-radius: 50% !important;
-        cursor: pointer !important;
-        padding: 0 !important;
-        margin: 0 auto !important;
-        display: block !important;
-    }
-    .icon-wrap + div.stButton button:hover {
-        background: rgba(184,144,109,0.08) !important;
-    }
-    .icon-wrap + div.stButton button p { display: none !important; }
-
-    /* Свой промт иконка */
-    .custom-icon-wrap {
-        display: flex; align-items: center; justify-content: center;
-        position: relative; width: 100%;
-    }
-    .custom-icon-wrap img {
-        width: 100% !important; height: 48px !important; object-fit: contain;
-        border-radius: 999px !important; border: 2px solid #D4C4B0;
-        background: white; padding: 8px 20px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.04); transition: all 0.2s;
-    }
-    .custom-icon-wrap.active img {
-        border-color: #B8906D !important;
-        box-shadow: 0 0 0 3px rgba(184,144,109,0.2) !important;
-    }
-
-    .custom-icon-wrap + div.stButton {
-        margin-top: -52px !important;
-        position: relative;
-        z-index: 20;
-    }
-    .custom-icon-wrap + div.stButton button {
-        width: 100% !important;
-        height: 52px !important;
-        min-height: 52px !important;
         background: transparent !important;
         border: none !important;
         box-shadow: none !important;
         color: transparent !important;
         font-size: 0 !important;
-        border-radius: 999px !important;
-        cursor: pointer !important;
         padding: 0 !important;
-    }
-    .custom-icon-wrap + div.stButton button:hover {
-        background: rgba(184,144,109,0.06) !important;
-    }
-    .custom-icon-wrap + div.stButton button p { display: none !important; }
+        cursor: pointer !important;
+    }}
+    .icon-wrap + div.stButton button p {{ display: none !important; }}
+
+    /* === СВОЙ ПРОМТ (овальная) === */
+    .custom-wrap {{
+        width: 100%;
+        height: 50px;
+        border-radius: 999px;
+        border: 2px solid #D4C4B0;
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+    }}
+    .custom-wrap img {{
+        height: 22px;
+        width: auto;
+        object-fit: contain;
+    }}
+    .custom-wrap span {{
+        font-weight: 700;
+        font-size: 13px;
+        color: #666;
+    }}
+    .custom-wrap.active {{
+        border-color: #B8906D !important;
+        box-shadow: 0 0 0 3px rgba(184,144,109,0.2) !important;
+    }}
+
+    .custom-wrap + div.stButton {{
+        margin-top: -50px !important;
+        height: 50px !important;
+    }}
+    .custom-wrap + div.stButton button {{
+        width: 100% !important;
+        height: 50px !important;
+        min-height: 50px !important;
+        border-radius: 999px !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        color: transparent !important;
+        font-size: 0 !important;
+        padding: 0 !important;
+        cursor: pointer !important;
+    }}
+    .custom-wrap + div.stButton button p {{ display: none !important; }}
 
     /* Главная кнопка генерации */
-    button[kind="primary"] {
+    button[kind="primary"] {{
         background: linear-gradient(90deg, #A78BFA 0%, #F87171 100%) !important;
         color: white !important; height: 55px !important; font-weight: bold !important;
         border-radius: 16px !important; font-size: 17px !important;
-    }
-
-    .empty-result-card {
-        height: 600px; display: flex; flex-direction: column;
-        align-items: center; justify-content: center; color: #888;
-        border: 2px dashed #CCC; border-radius: 24px;
-    }
+    }}
     </style>
-    """, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
 # --- ШАПКА ---
-logo_b64_main = _read_b64(LOGO_PATH)
 st.markdown(f"""
     <div class="custom-header">
         <div style="color: #444; font-size: 18px;"><b>{st.session_state.user_role}!</b> Добро пожаловать в Lazurit AI Render</div>
         <img src="data:image/png;base64,{logo_b64_main}" class="header-logo">
     </div>
-    """, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
 st.markdown('<div class="logout-marker"></div>', unsafe_allow_html=True)
 if st.button("🚪 Выйти", key="logout_btn"):
@@ -279,41 +280,31 @@ with col_left:
 
     st.markdown('<div class="card"><b>2. Освещение</b>', unsafe_allow_html=True)
 
-    # === 4 КРУГЛЫЕ ИКОНКИ ===
+    # 4 круглые иконки
     c1, c2, c3, c4 = st.columns(4, gap="small")
     for i, col in enumerate([c1, c2, c3, c4]):
         with col:
             icon_b64 = _read_b64(PRESET_ICONS[i])
             active = "active" if st.session_state.sel_idx == i else ""
-            if icon_b64:
-                st.markdown(
-                    f'<div class="icon-wrap {active}"><img src="data:image/png;base64,{icon_b64}"></div>',
-                    unsafe_allow_html=True
-                )
-            else:
-                st.markdown(
-                    f'<div class="icon-wrap {active}"><img src=""></div>',
-                    unsafe_allow_html=True
-                )
-            if st.button("ㅤ", key=f"pbtn_{i}"):
+            st.markdown(
+                f'<div class="icon-wrap {active}"><img src="data:image/png;base64,{icon_b64}"></div>',
+                unsafe_allow_html=True
+            )
+            # КНОПКА СРАЗУ ПОСЛЕ icon-wrap (важно для CSS .icon-wrap + div.stButton)
+            if st.button(" ", key=f"pbtn_{i}"):
                 st.session_state.sel_idx = i
                 st.session_state.prompt_text = PROMPT_PRESETS[PRESET_NAMES[i]]
                 st.rerun()
 
-    # === КНОПКА СВОЙ ПРОМТ ===
+    # Свой промт (овальная)
     svoi_b64 = _read_b64("svoi.png")
     custom_active = "active" if st.session_state.sel_idx == -1 else ""
-    if svoi_b64:
-        st.markdown(
-            f'<div class="custom-icon-wrap {custom_active}"><img src="data:image/png;base64,{svoi_b64}"></div>',
-            unsafe_allow_html=True
-        )
-    else:
-        st.markdown(
-            f'<div class="custom-icon-wrap {custom_active}"><img src=""></div>',
-            unsafe_allow_html=True
-        )
-    if st.button("ㅤ", key="custom_prompt_btn", use_container_width=True):
+    st.markdown(
+        f'<div class="custom-wrap {custom_active}"><img src="data:image/png;base64,{svoi_b64}"><span>СВОЙ ПРОМТ</span></div>',
+        unsafe_allow_html=True
+    )
+    # КНОПКА СРАЗУ ПОСЛЕ custom-wrap
+    if st.button(" ", key="custom_prompt_btn", use_container_width=True):
         st.session_state.sel_idx = -1
         st.session_state.prompt_text = PROMPT_PRESETS["Свой промт"]
         st.rerun()
@@ -332,7 +323,8 @@ with col_left:
                         msg = res["outputs"][0]["outputs"][0]["results"]["message"]["text"]
                         st.session_state.last_response = msg
                         raw = msg.split("|||")[1] if "|||" in msg else msg
-                        if "base64," in raw: raw = raw.split("base64,")[1]
+                        if "base64," in raw:
+                            raw = raw.split("base64,")[1]
                         img_bytes = base64.b64decode(raw.replace('"', "").strip())
                         st.session_state.history.insert(0, img_bytes)
                         st.session_state.history = st.session_state.history[:10]
@@ -348,17 +340,9 @@ with col_main:
         st.image(st.session_state.history[0], use_container_width=True, caption="Результат")
         st.markdown("</div>", unsafe_allow_html=True)
     else:
-        st.markdown("""
-            <div class="card empty-result-card">
-                <h1 style="color:#bbb; font-weight:bold;">Результат генерации</h1>
-                <p style="color:#ccc;">Загрузите изображение для начала работы</p>
-            </div>""", unsafe_allow_html=True)
+        st.markdown('<div class="card empty-result-card"><h1 style="color:#bbb; font-weight:bold;">Результат генерации</h1></div>', unsafe_allow_html=True)
 
 with col_hist:
     st.markdown("<b>История</b>", unsafe_allow_html=True)
     for img in st.session_state.history[1:6]:
         st.image(img, use_container_width=True)
-
-if st.session_state.last_response:
-    with st.expander("🛠 Лог"):
-        st.text(st.session_state.last_response)
