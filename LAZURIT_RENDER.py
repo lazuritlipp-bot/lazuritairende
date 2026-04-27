@@ -1,3 +1,8 @@
+Для реализации такого дизайна мы используем два компонента `image_select`. Один для круглых иконок (4 в ряд), а второй для длинной кнопки «Свой промт».
+
+Я добавил специальный CSS, который превращает обычные квадратные иконки первого блока в **идеальные круги**, как на вашем примере.
+
+```python
 import streamlit as st
 import requests
 import base64
@@ -114,7 +119,6 @@ st.markdown("""
     <style>
     .stApp { background-color: #E8E8E1; }
     
-    /* ПОЛНОСТЬЮ СКРЫВАЕМ ВЕРХНЮЮ ПОЛОСУ STREAMLIT */
     header, [data-testid="stHeader"], [data-testid="stToolbar"] {
         display: none !important;
         visibility: hidden !important;
@@ -148,7 +152,7 @@ st.markdown("""
         transform: translateY(-50%);
     }
     
-    /* Кнопка выхода внутри шапки */
+    /* Кнопка выхода */
     div.element-container:has(.logout-marker) { display: none; }
     div.element-container:has(.logout-marker) + div.element-container {
         margin-top: -58px !important;
@@ -167,69 +171,34 @@ st.markdown("""
         height: 32px !important;
         padding: 0 14px !important;
         font-size: 13.5px !important;
-        transition: all 0.2s;
-    }
-    div.element-container:has(.logout-marker) + div.element-container button:hover {
-        background: #FF4B4B !important;
-        color: white !important;
-        border-color: #FF4B4B !important;
     }
 
-    /* СКРУГЛЕНИЯ И СТИЛИ КАРТОЧЕК */
-    .card { 
-        background-color: #F8F9FA; 
-        border-radius: 20px; /* Увеличено скругление карточек */
-        padding: 20px; 
-        border: 1px solid #E0E0E0; 
-        margin-bottom: 15px; 
-    }
+    .card { background-color: #F8F9FA; border-radius: 20px; padding: 20px; border: 1px solid #E0E0E0; margin-bottom: 15px; }
     .card > b { color: #000000 !important; }
     
-    /* Скругление текстового поля и загрузчика */
-    div[data-testid="stTextArea"] > div > div > textarea { border-radius: 16px !important; }
-    div[data-testid="stFileUploader"] > section { border-radius: 16px !important; }
-    
-    /* Округление самого контейнера image_select */
-    iframe[title*="streamlit_image_select"] { 
-        background: transparent !important; 
-        border-radius: 16px !important;
-        overflow: hidden !important;
+    /* Стилизация первого набора иконок (КРУГЛЫЕ) */
+    div[data-testid="column"]:nth-child(1) div[data-testid="stVerticalBlock"] > div:nth-child(3) iframe {
+        height: 90px !important;
     }
     
-    /* Скругление кнопок */
-    div[data-testid="stHorizontalBlock"] button { 
-        background-color: #FFFFFF !important; 
-        color: #333 !important; 
-        border: 1px solid #CCC !important; 
-        font-size: 12px !important; 
-        padding: 4px 6px !important; 
-        border-radius: 10px !important;
+    /* Глобальный хак для скругления иконок в iframe */
+    iframe[title*="streamlit_image_select"] {
+        border-radius: 50px !important; /* Для круглых */
     }
-    
+
+    /* Кнопка генерации */
     div.stButton > button:first-child[kind="primary"] { 
         background: linear-gradient(90deg, #A78BFA 0%, #F87171 100%) !important; 
         color: white !important; 
-        border: none !important; 
         height: 55px !important; 
         font-size: 17px !important; 
         font-weight: bold !important; 
-        border-radius: 16px !important; /* Круглая главная кнопка */
+        border-radius: 16px !important;
     }
     
     .empty-result-card { 
-        height: 600px; 
-        display: flex; 
-        flex-direction: column; 
-        align-items: center; 
-        justify-content: center; 
-        color: #888; 
-        border: 2px dashed #CCC; 
-        border-radius: 24px;
-    }
-    
-    /* Скругление загруженных картинок в левой колонке */
-    div[data-testid="column"]:nth-child(1) img {
-        border-radius: 12px !important;
+        height: 600px; display: flex; flex-direction: column; align-items: center; 
+        justify-content: center; color: #888; border: 2px dashed #CCC; border-radius: 24px;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -276,45 +245,55 @@ st.markdown('<div class="logout-marker"></div>', unsafe_allow_html=True)
 if st.button("🚪 Выйти", key="logout_btn"):
     logout()
 
-# --- РАБОЧАЯ ОБЛАСТЬ (ИЗМЕНЕННЫЕ ПРОПОРЦИИ КОЛОНОК) ---
-# [1.0, 3.5, 0.6] -> Левая колонка стала в 2 раза уже, центральная намного шире
+# --- РАБОЧАЯ ОБЛАСТЬ ---
 col_left, col_main, col_hist = st.columns([1.0, 3.5, 0.6])
 
 with col_left:
+    # 1. Загрузка
     st.markdown('<div class="card"><b>1. Загрузка</b>', unsafe_allow_html=True)
     f = st.file_uploader("upload", label_visibility="collapsed")
     if f: st.image(f, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
+    # 2. Освещение
     st.markdown('<div class="card"><b>2. Освещение</b>', unsafe_allow_html=True)
+    
+    # ПЕРВЫЙ РЯД: 4 круглые иконки
     PRESET_NAMES = ["Студия", "День", "Вечер", "Аксессуары"]
-    PRESET_PATHS = [
-        "studio.png",
-        "den.png",
-        "vecher.png",
-        "acsesoar.png",
-    ]
+    PRESET_PATHS = ["studio.png", "den.png", "vecher.png", "acsesoar.png"]
 
     selected_idx = image_select(
         label="",
         images=PRESET_PATHS,
-        captions=None,
         use_container_width=False,
         return_value="index",
-        key="preset_image_select",
+        key="presets_circle"
     )
 
-    if selected_idx is not None and st.session_state.get("_preset_idx") != selected_idx:
+    if selected_idx is not None and st.session_state.get("_last_idx") != selected_idx:
         st.session_state.current_prompt = PROMPT_PRESETS[PRESET_NAMES[selected_idx]]
-        st.session_state._preset_idx = selected_idx
+        st.session_state._last_idx = selected_idx
+        st.session_state._custom_mode = False
         st.rerun()
 
-    if st.button("Свой промт", key="custom_prompt_btn", use_container_width=True):
+    # ВТОРОЙ РЯД: Кнопка Свой промт (вытянутая иконка svoi.png)
+    selected_custom = image_select(
+        label="",
+        images=["svoi.png"],
+        use_container_width=True,
+        key="custom_btn_img"
+    )
+    
+    # Если кликнули по иконке svoi.png
+    if selected_custom == "svoi.png" and not st.session_state.get("_custom_mode"):
         st.session_state.current_prompt = PROMPT_PRESETS.get("Свой промт", "")
-        st.session_state._preset_idx = None
+        st.session_state._custom_mode = True
+        st.session_state._last_idx = None
         st.rerun()
+        
     st.markdown('</div>', unsafe_allow_html=True)
 
+    # ТЗ промпта
     user_text = st.text_area("ТЗ промпта:", value=st.session_state.current_prompt, height=200)
 
     if st.button("ГЕНЕРИРОВАТЬ AI ИЗОБРАЖЕНИЕ", use_container_width=True, type="primary"):
@@ -357,3 +336,4 @@ with col_hist:
 if st.session_state.last_response:
     with st.expander("🛠 Лог"):
         st.text(st.session_state.last_response)
+```
