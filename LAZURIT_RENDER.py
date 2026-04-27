@@ -1,3 +1,4 @@
+```python
 import streamlit as st
 import requests
 import base64
@@ -38,14 +39,14 @@ def file_to_data_url(path: Path) -> str:
 
 
 def get_query_param(name: str):
-    # streamlit >= 1.30
+    # Streamlit new API
     try:
         v = st.query_params.get(name)
         if isinstance(v, list):
             return v[0] if v else None
         return v
     except Exception:
-        # старый API
+        # Streamlit old API
         return st.experimental_get_query_params().get(name, [None])[0]
 
 
@@ -234,17 +235,15 @@ if "last_response" not in st.session_state:
 def apply_mode(mode_code: str):
     if mode_code not in BUTTONS:
         return
-
     st.session_state.selected_mode = mode_code
     _label, _icon, add_text = BUTTONS[mode_code]
-
     if mode_code == "svoi":
         st.session_state.current_prompt = st.session_state.custom_prompt
     else:
         st.session_state.current_prompt = f"{add_text} {BASE_PHOTO_PROMPT}".strip()
 
 
-# --- обработка клика по HTML-плитке ---
+# --- обработка клика по HTML-плитке через query params ---
 clicked_mode = get_query_param("preset")
 if clicked_mode:
     apply_mode(clicked_mode)
@@ -252,13 +251,15 @@ if clicked_mode:
 
 # --- ШАПКА ---
 logo_url = file_to_data_url(LOGO_PATH)
-st.markdown(
-    f'<div class="custom-header">'
-    f'<div style="color:#444; font-size:18px;"><b>{st.session_state.user_role}!</b> Добро пожаловать в Lazurit AI Render</div>'
-    f'{("<img src=\\"" + logo_url + "\\" class=\\"header-logo\\">") if logo_url else ""}'
-    f"</div>",
-    unsafe_allow_html=True,
-)
+header_html = f"""
+<div class="custom-header">
+  <div style="color:#444; font-size:18px;">
+    <b>{st.session_state.user_role}!</b> Добро пожаловать в Lazurit AI Render
+  </div>
+  {"<img src='" + logo_url + "' class='header-logo' />" if logo_url else ""}
+</div>
+"""
+st.markdown(header_html, unsafe_allow_html=True)
 
 # --- РАБОЧАЯ ОБЛАСТЬ ---
 col_left, col_main, col_hist = st.columns([1.2, 2.5, 0.6])
@@ -272,7 +273,6 @@ with col_left:
 
     st.markdown('<div class="card"><b>2. Освещение</b>', unsafe_allow_html=True)
 
-    # --- плитки ---
     missing = []
     tiles = []
 
@@ -287,7 +287,7 @@ with col_left:
         icon_url = file_to_data_url(icon_path)
         active_cls = "active" if st.session_state.selected_mode == code else ""
 
-        # ВАЖНО: без переносов/отступов, чтобы Markdown не превратил это в code-block
+        # ВАЖНО: без переносов/отступов внутри HTML, чтобы Markdown не делал code-block
         tiles.append(
             f'<a class="icon-btn {active_cls}" href="?preset={code}" title="{label}">'
             f'<img src="{icon_url}" alt="{label}"></a>'
@@ -342,10 +342,12 @@ with col_main:
         st.markdown("</div>", unsafe_allow_html=True)
     else:
         st.markdown(
-            '<div class="card empty-result-card">'
-            '<h1 style="color:#bbb; font-weight:bold;">Результат генерации</h1>'
-            '<p style="color:#ccc;">Загрузите изображение для начала работы</p>'
-            "</div>",
+            """
+<div class="card empty-result-card">
+  <h1 style="color:#bbb; font-weight:bold;">Результат генерации</h1>
+  <p style="color:#ccc;">Загрузите изображение для начала работы</p>
+</div>
+""",
             unsafe_allow_html=True,
         )
 
@@ -357,3 +359,4 @@ with col_hist:
 if st.session_state.last_response:
     with st.expander("🛠 Лог"):
         st.text(st.session_state.last_response)
+```
