@@ -1,16 +1,15 @@
+# -*- coding: utf-8 -*-
+
 import streamlit as st
 import requests
 import base64
 from pathlib import Path
 
-
-# --- КОНФИГУРАЦИЯ ---
 BASE_URL = "https://lzrt-nocode.gpt.mws.ru/api/v1/run/bf1dc235-5c36-4bba-8d7e-a88cd5e19bd6?stream=false"
 
 ROOT = Path(__file__).resolve().parent
 LOGO_PATH = ROOT / "logo2.png"
 
-# preset_code -> (label, icon_file, prompt_addition)
 BUTTONS = {
     "den": ("Дневной", "den.png", "Natural bright daylight from windows, soft sun rays."),
     "studio": ("Студийный", "studio.png", "Professional architectural studio lighting, balanced fills."),
@@ -20,8 +19,15 @@ BUTTONS = {
 }
 BUTTON_ORDER = ["den", "studio", "vecher", "acsesoar", "svoi"]
 
+BASE_PHOTO_PROMPT = (
+    "Masterpiece, 8k resolution, photorealistic interior photography, Architectural Digest style. "
+    "Maintain the original color palette and materials of the furniture strictly. Enhance existing textures "
+    "(wood grain, stone, fabric) without changing their color. Replace flat lighting with professional cinematic "
+    "studio lighting and realistic global illumination. Add natural soft sunlight and deep realistic shadows to create depth. "
+    "High-contrast, sharp details, realistic reflections on surfaces. Ensure 100% photorealism, Architectural Digest style."
+)
 
-# --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ---
+
 def file_to_b64(path: Path) -> str:
     try:
         return base64.b64encode(path.read_bytes()).decode("utf-8")
@@ -38,8 +44,11 @@ def file_to_data_url(path: Path) -> str:
     return f"data:{mime};base64,{b64}"
 
 
+def image_to_base64(image_bytes: bytes) -> str:
+    return base64.b64encode(image_bytes).decode("utf-8")
+
+
 def get_query_param(name: str):
-    # совместимость на всякий случай
     try:
         v = st.query_params.get(name)
         if isinstance(v, list):
@@ -67,7 +76,6 @@ def process_image(img_b64: str, user_prompt: str, mime: str):
     return requests.post(BASE_URL, json=payload, headers=headers).json()
 
 
-# --- СИСТЕМА ЛИЧНЫХ ДОСТУПОВ ---
 def check_password():
     if "authenticated" not in st.session_state:
         st.session_state.authenticated = False
@@ -76,7 +84,7 @@ def check_password():
 
     if not st.session_state.authenticated:
         st.markdown("<style>.stApp { background-color: #0E1117; }</style>", unsafe_allow_html=True)
-        st.sidebar.title("🔐 LAZURIT AI Render")
+        st.sidebar.title("LAZURIT AI Render")
         pwd = st.sidebar.text_input("Введите код доступа:", type="password")
         if st.sidebar.button("Войти", use_container_width=True):
             users_data = st.secrets.get("users", {})
@@ -87,21 +95,42 @@ def check_password():
                 st.session_state.user_api_key = user_info.get("key", "")
                 st.rerun()
             else:
-                st.sidebar.error("❌ Код не опознан")
+                st.sidebar.error("Код не опознан")
         st.stop()
 
 
-# --- ИНТЕРФЕЙС И СТИЛИ ---
+def apply_mode(mode_code: str):
+    if mode_code not in BUTTONS:
+        return
+    st.session_state.selected_mode = mode_code
+    _label, _icon, add_text = BUTTONS[mode_code]
+    if mode_code == "svoi":
+        st.session_state.current_prompt = st.session_state.custom_prompt
+    else:
+        st.session_state.current_prompt = f"{add_text} {BASE_PHOTO_PROMPT}".strip()
+
+
 st.set_page_config(page_title="LAZURIT AI Render", layout="wide")
 check_password()
 APPLICATION_TOKEN = st.session_state.user_api_key
 
+if "history" not in st.session_state:
+    st.session_state.history = []
+if "current_prompt" not in st.session_state:
+    st.session_state.current_prompt = BASE_PHOTO_PROMPT
+if "selected_mode" not in st.session_state:
+    st.session_state.selected_mode = "den"
+if "custom_prompt" not in st.session_state:
+    st.session_state.custom_prompt = ""
+if "last_response" not in st.session_state:
+    st.session_state.last_response = ""
+
 st.markdown(
-    """
-<style>
+"""<style>
 .stApp { background-color: #E8E8E1; }
 .block-container { padding-top: 1rem !important; }
 
+/* Шапка */
 .custom-header {
     background-color: white;
     padding: 10px 30px;
@@ -119,6 +148,7 @@ st.markdown(
     object-fit: contain;
 }
 
+/* Карточки */
 .card {
     background-color: #F8F9FA;
     border-radius: 15px;
@@ -142,7 +172,7 @@ div.stButton > button:first-child[kind="primary"] {
     font-weight: bold !important;
 }
 
-/* Пустой блок результата */
+/* Пустой результат */
 .empty-result-card {
     height: 600px;
     display:flex;
@@ -153,7 +183,7 @@ div.stButton > button:first-child[kind="primary"] {
     border:2px dashed #CCC;
 }
 
-/* --- ИКОНКИ-ПЛИТКИ --- */
+/* Панель икон-кнопок */
 .icon-grid {
     display: grid;
     grid-template-columns: repeat(3, 82px);
@@ -161,7 +191,6 @@ div.stButton > button:first-child[kind="primary"] {
     margin-top: 6px;
     margin-bottom: 10px;
 }
-
 .icon-btn {
     width: 82px;
     height: 82px;
@@ -171,140 +200,84 @@ div.stButton > button:first-child[kind="primary"] {
     box-shadow:
         6px 6px 14px rgba(0,0,0,0.18),
         -6px -6px 14px rgba(255,255,255,0.90);
-
     display: flex;
     align-items: center;
     justify-content: center;
-
     text-decoration: none;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
 }
-
-.icon-btn:hover {
-    transform: translateY(-1px);
-    box-shadow:
-        8px 8px 18px rgba(0,0,0,0.20),
-        -8px -8px 18px rgba(255,255,255,0.92);
-}
-
-.icon-btn:active {
-    transform: scale(0.98);
-}
-
-.icon-btn.active {
-    outline: 3px solid rgba(167,139,250,0.55);
-}
-
 .icon-btn img {
     width: 56px;
     height: 56px;
     object-fit: contain;
     display: block;
 }
-</style>
-""",
+
+/* Не нужно сейчас (заглушено)
+.icon-btn:hover { transform: translateY(-1px); }
+.icon-btn:active { transform: scale(0.98); }
+.icon-btn.active { outline: 3px solid rgba(167,139,250,0.55); }
+*/
+</style>""",
     unsafe_allow_html=True,
 )
 
-# --- ДАННЫЕ ---
-BASE_PHOTO_PROMPT = (
-    "Masterpiece, 8k resolution, photorealistic interior photography, Architectural Digest style. "
-    "Maintain the original color palette and materials of the furniture strictly. Enhance existing textures "
-    "(wood grain, stone, fabric) without changing their color. Replace flat lighting with professional cinematic "
-    "studio lighting and realistic global illumination. Add natural soft sunlight and deep realistic shadows to create depth. "
-    "High-contrast, sharp details, realistic reflections on surfaces. Ensure 100% photorealism, Architectural Digest style."
-)
-
-# --- STATE ---
-if "history" not in st.session_state:
-    st.session_state.history = []
-if "current_prompt" not in st.session_state:
-    st.session_state.current_prompt = BASE_PHOTO_PROMPT
-if "selected_mode" not in st.session_state:
-    st.session_state.selected_mode = "den"
-if "custom_prompt" not in st.session_state:
-    st.session_state.custom_prompt = ""
-if "last_response" not in st.session_state:
-    st.session_state.last_response = ""
-
-
-def apply_mode(mode_code: str):
-    if mode_code not in BUTTONS:
-        return
-    st.session_state.selected_mode = mode_code
-
-    label, _icon, add_text = BUTTONS[mode_code]
-    if mode_code == "svoi":
-        st.session_state.current_prompt = st.session_state.custom_prompt
-    else:
-        st.session_state.current_prompt = f"{add_text} {BASE_PHOTO_PROMPT}".strip()
-
-
-# --- ОБРАБОТКА КЛИКА ПО HTML-КНОПКАМ ---
 clicked_mode = get_query_param("preset")
 if clicked_mode:
     apply_mode(clicked_mode)
-    clear_query_params()  # убираем ?preset=... из URL
+    clear_query_params()
 
-
-# --- ШАПКА ---
 logo_url = file_to_data_url(LOGO_PATH)
-st.markdown(
-    f"""
-<div class="custom-header">
-  <div style="color:#444; font-size:18px;">
-    <b>{st.session_state.user_role}!</b> Добро пожаловать в Lazurit AI Render
-  </div>
-  {"<img src='" + logo_url + "' class='header-logo'>" if logo_url else ""}
-</div>
-""",
-    unsafe_allow_html=True,
+logo_img = f"<img src='{logo_url}' class='header-logo' />" if logo_url else ""
+header_html = (
+    "<div class='custom-header'>"
+    f"<div style='color:#444; font-size:18px;'><b>{st.session_state.user_role}!</b> Добро пожаловать в Lazurit AI Render</div>"
+    f"{logo_img}"
+    "</div>"
 )
+st.markdown(header_html, unsafe_allow_html=True)
 
-# --- РАБОЧАЯ ОБЛАСТЬ ---
 col_left, col_main, col_hist = st.columns([1.2, 2.5, 0.6])
 
 with col_left:
-    st.markdown('<div class="card"><b>1. Загрузка</b>', unsafe_allow_html=True)
+    st.markdown("<div class='card'><b>1. Загрузка</b>", unsafe_allow_html=True)
     f = st.file_uploader("upload", label_visibility="collapsed")
     if f:
         st.image(f, use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
-    st.markdown('<div class="card"><b>2. Освещение</b>', unsafe_allow_html=True)
+    st.markdown("<div class='card'><b>2. Освещение</b>", unsafe_allow_html=True)
 
-    # Проверим наличие файлов и соберём HTML плитки
     missing = []
     tiles = []
     for code in BUTTON_ORDER:
         label, icon_file, _add = BUTTONS[code]
         icon_path = ROOT / icon_file
+
         if not icon_path.exists():
             missing.append(icon_file)
             continue
 
         icon_url = file_to_data_url(icon_path)
         active_cls = "active" if st.session_state.selected_mode == code else ""
+
+        # Важно: в одну строку, без отступов/переносов (иначе Streamlit может показать как код)
         tiles.append(
-            f"""
-            <a class="icon-btn {active_cls}" href="?preset={code}" title="{label}">
-                <img src="{icon_url}" alt="{label}">
-            </a>
-            """
+            f'<a class="icon-btn {active_cls}" href="?preset={code}" title="{label}">'
+            f'<img src="{icon_url}" alt="{label}"></a>'
         )
 
     if missing:
         st.error("Не найдены файлы: " + ", ".join(missing))
         st.caption(f"Папка приложения: {ROOT}")
     else:
-        st.markdown(f'<div class="icon-grid">{"".join(tiles)}</div>', unsafe_allow_html=True)
+        st.markdown('<div class="icon-grid">' + "".join(tiles) + "</div>", unsafe_allow_html=True)
 
     st.markdown("</div>", unsafe_allow_html=True)
 
     user_text = st.text_area("ТЗ промпта:", value=st.session_state.current_prompt, height=200)
 
-    # сохраняем "Свой"
     if st.session_state.selected_mode == "svoi":
         st.session_state.custom_prompt = user_text
 
@@ -338,17 +311,15 @@ with col_left:
 
 with col_main:
     if st.session_state.history:
-        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.markdown("<div class='card'>", unsafe_allow_html=True)
         st.image(st.session_state.history[0], use_container_width=True, caption="Результат")
         st.markdown("</div>", unsafe_allow_html=True)
     else:
         st.markdown(
-            """
-<div class="card empty-result-card">
-  <h1 style="color:#bbb; font-weight:bold;">Результат генерации</h1>
-  <p style="color:#ccc;">Загрузите изображение для начала работы</p>
-</div>
-""",
+            "<div class='card empty-result-card'>"
+            "<h1 style='color:#bbb; font-weight:bold;'>Результат генерации</h1>"
+            "<p style='color:#ccc;'>Загрузите изображение для начала работы</p>"
+            "</div>",
             unsafe_allow_html=True,
         )
 
@@ -358,5 +329,5 @@ with col_hist:
         st.image(img, use_container_width=True)
 
 if st.session_state.last_response:
-    with st.expander("🛠 Лог"):
+    with st.expander("Лог"):
         st.text(st.session_state.last_response)
