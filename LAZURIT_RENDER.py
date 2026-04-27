@@ -3,7 +3,6 @@ import requests
 import base64
 from pathlib import Path
 
-
 # --- КОНФИГУРАЦИЯ ---
 BASE_URL = "https://lzrt-nocode.gpt.mws.ru/api/v1/run/bf1dc235-5c36-4bba-8d7e-a88cd5e19bd6?stream=false"
 
@@ -39,13 +38,14 @@ def file_to_data_url(path: Path) -> str:
 
 
 def get_query_param(name: str):
-    # совместимость на всякий случай
+    # streamlit >= 1.30
     try:
         v = st.query_params.get(name)
         if isinstance(v, list):
             return v[0] if v else None
         return v
     except Exception:
+        # старый API
         return st.experimental_get_query_params().get(name, [None])[0]
 
 
@@ -56,15 +56,8 @@ def clear_query_params():
         st.experimental_set_query_params()
 
 
-def process_image(img_b64: str, user_prompt: str, mime: str):
-    combined_input = f"{user_prompt}|||data:{mime};base64,{img_b64}"
-    payload = {"input_value": combined_input, "output_type": "chat", "input_type": "chat"}
-    headers = {
-        "Authorization": f"Bearer {APPLICATION_TOKEN}",
-        "x-api-key": APPLICATION_TOKEN,
-        "Content-Type": "application/json",
-    }
-    return requests.post(BASE_URL, json=payload, headers=headers).json()
+def image_to_base64(image_bytes: bytes) -> str:
+    return base64.b64encode(image_bytes).decode("utf-8")
 
 
 # --- СИСТЕМА ЛИЧНЫХ ДОСТУПОВ ---
@@ -91,6 +84,17 @@ def check_password():
         st.stop()
 
 
+def process_image(img_b64: str, user_prompt: str, mime: str):
+    combined_input = f"{user_prompt}|||data:{mime};base64,{img_b64}"
+    payload = {"input_value": combined_input, "output_type": "chat", "input_type": "chat"}
+    headers = {
+        "Authorization": f"Bearer {APPLICATION_TOKEN}",
+        "x-api-key": APPLICATION_TOKEN,
+        "Content-Type": "application/json",
+    }
+    return requests.post(BASE_URL, json=payload, headers=headers).json()
+
+
 # --- ИНТЕРФЕЙС И СТИЛИ ---
 st.set_page_config(page_title="LAZURIT AI Render", layout="wide")
 check_password()
@@ -102,7 +106,7 @@ st.markdown(
 .stApp { background-color: #E8E8E1; }
 .block-container { padding-top: 1rem !important; }
 
-.custom-header {
+.custom-header{
     background-color: white;
     padding: 10px 30px;
     border-radius: 12px;
@@ -113,27 +117,27 @@ st.markdown(
     border: 1px solid #D1D1D1;
     min-height: 90px;
 }
-.header-logo {
+.header-logo{
     height: 90px !important;
     width: auto !important;
     object-fit: contain;
 }
 
-.card {
+.card{
     background-color: #F8F9FA;
     border-radius: 15px;
     padding: 20px;
     border: 1px solid #E0E0E0;
     margin-bottom: 15px;
 }
-.card > b {
+.card > b{
     color:#000 !important;
     display:block;
     margin-bottom: 12px;
 }
 
 /* Главная кнопка */
-div.stButton > button:first-child[kind="primary"] {
+div.stButton > button:first-child[kind="primary"]{
     background: linear-gradient(90deg, #A78BFA 0%, #F87171 100%) !important;
     color: white !important;
     border: none !important;
@@ -143,7 +147,7 @@ div.stButton > button:first-child[kind="primary"] {
 }
 
 /* Пустой блок результата */
-.empty-result-card {
+.empty-result-card{
     height: 600px;
     display:flex;
     flex-direction:column;
@@ -154,7 +158,7 @@ div.stButton > button:first-child[kind="primary"] {
 }
 
 /* --- ИКОНКИ-ПЛИТКИ --- */
-.icon-grid {
+.icon-grid{
     display: grid;
     grid-template-columns: repeat(3, 82px);
     gap: 14px;
@@ -162,7 +166,7 @@ div.stButton > button:first-child[kind="primary"] {
     margin-bottom: 10px;
 }
 
-.icon-btn {
+.icon-btn{
     width: 82px;
     height: 82px;
     border-radius: 18px;
@@ -172,35 +176,33 @@ div.stButton > button:first-child[kind="primary"] {
         6px 6px 14px rgba(0,0,0,0.18),
         -6px -6px 14px rgba(255,255,255,0.90);
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display:flex;
+    align-items:center;
+    justify-content:center;
 
-    text-decoration: none;
-    user-select: none;
+    text-decoration:none;
+    user-select:none;
     -webkit-tap-highlight-color: transparent;
 }
 
-.icon-btn:hover {
+.icon-btn:hover{
     transform: translateY(-1px);
     box-shadow:
         8px 8px 18px rgba(0,0,0,0.20),
         -8px -8px 18px rgba(255,255,255,0.92);
 }
 
-.icon-btn:active {
-    transform: scale(0.98);
-}
+.icon-btn:active{ transform: scale(0.98); }
 
-.icon-btn.active {
+.icon-btn.active{
     outline: 3px solid rgba(167,139,250,0.55);
 }
 
-.icon-btn img {
+.icon-btn img{
     width: 56px;
     height: 56px;
     object-fit: contain;
-    display: block;
+    display:block;
 }
 </style>
 """,
@@ -232,33 +234,29 @@ if "last_response" not in st.session_state:
 def apply_mode(mode_code: str):
     if mode_code not in BUTTONS:
         return
-    st.session_state.selected_mode = mode_code
 
-    label, _icon, add_text = BUTTONS[mode_code]
+    st.session_state.selected_mode = mode_code
+    _label, _icon, add_text = BUTTONS[mode_code]
+
     if mode_code == "svoi":
         st.session_state.current_prompt = st.session_state.custom_prompt
     else:
         st.session_state.current_prompt = f"{add_text} {BASE_PHOTO_PROMPT}".strip()
 
 
-# --- ОБРАБОТКА КЛИКА ПО HTML-КНОПКАМ ---
+# --- обработка клика по HTML-плитке ---
 clicked_mode = get_query_param("preset")
 if clicked_mode:
     apply_mode(clicked_mode)
-    clear_query_params()  # убираем ?preset=... из URL
-
+    clear_query_params()
 
 # --- ШАПКА ---
 logo_url = file_to_data_url(LOGO_PATH)
 st.markdown(
-    f"""
-<div class="custom-header">
-  <div style="color:#444; font-size:18px;">
-    <b>{st.session_state.user_role}!</b> Добро пожаловать в Lazurit AI Render
-  </div>
-  {"<img src='" + logo_url + "' class='header-logo'>" if logo_url else ""}
-</div>
-""",
+    f'<div class="custom-header">'
+    f'<div style="color:#444; font-size:18px;"><b>{st.session_state.user_role}!</b> Добро пожаловать в Lazurit AI Render</div>'
+    f'{("<img src=\\"" + logo_url + "\\" class=\\"header-logo\\">") if logo_url else ""}'
+    f"</div>",
     unsafe_allow_html=True,
 )
 
@@ -274,31 +272,32 @@ with col_left:
 
     st.markdown('<div class="card"><b>2. Освещение</b>', unsafe_allow_html=True)
 
-    # Проверим наличие файлов и соберём HTML плитки
+    # --- плитки ---
     missing = []
     tiles = []
+
     for code in BUTTON_ORDER:
         label, icon_file, _add = BUTTONS[code]
         icon_path = ROOT / icon_file
+
         if not icon_path.exists():
             missing.append(icon_file)
             continue
 
         icon_url = file_to_data_url(icon_path)
         active_cls = "active" if st.session_state.selected_mode == code else ""
+
+        # ВАЖНО: без переносов/отступов, чтобы Markdown не превратил это в code-block
         tiles.append(
-            f"""
-            <a class="icon-btn {active_cls}" href="?preset={code}" title="{label}">
-                <img src="{icon_url}" alt="{label}">
-            </a>
-            """
+            f'<a class="icon-btn {active_cls}" href="?preset={code}" title="{label}">'
+            f'<img src="{icon_url}" alt="{label}"></a>'
         )
 
     if missing:
         st.error("Не найдены файлы: " + ", ".join(missing))
         st.caption(f"Папка приложения: {ROOT}")
     else:
-        st.markdown(f'<div class="icon-grid">{"".join(tiles)}</div>', unsafe_allow_html=True)
+        st.markdown('<div class="icon-grid">' + "".join(tiles) + "</div>", unsafe_allow_html=True)
 
     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -343,12 +342,10 @@ with col_main:
         st.markdown("</div>", unsafe_allow_html=True)
     else:
         st.markdown(
-            """
-<div class="card empty-result-card">
-  <h1 style="color:#bbb; font-weight:bold;">Результат генерации</h1>
-  <p style="color:#ccc;">Загрузите изображение для начала работы</p>
-</div>
-""",
+            '<div class="card empty-result-card">'
+            '<h1 style="color:#bbb; font-weight:bold;">Результат генерации</h1>'
+            '<p style="color:#ccc;">Загрузите изображение для начала работы</p>'
+            "</div>",
             unsafe_allow_html=True,
         )
 
