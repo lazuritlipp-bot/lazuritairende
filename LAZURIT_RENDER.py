@@ -50,72 +50,78 @@ def check_password():
                 top: 0; left: 0; right: 0; bottom: 0;
             }}
 
-            /* КАРТОЧКА ЛОГИНА - ТЕМНАЯ */
+            /* КАРТОЧКА ЛОГИНА - ТЕМНАЯ (согласно image_94e9b8.png) */
             div[data-testid="stForm"] {{
-                width: 400px !important;
+                width: 420px !important;
                 background: #333333 !important;
                 border-radius: 20px !important;
-                padding: 35px !important;
-                box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5) !important;
+                padding: 40px !important;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6) !important;
                 border: none !important;
                 margin: auto !important;
+                display: flex !important;
+                flex-direction: column !important;
             }}
             
             div[data-testid="stForm"] label {{
                 color: #FFFFFF !important;
                 font-weight: 400 !important;
-                margin-bottom: 8px !important;
-                font-size: 14px !important;
+                margin-bottom: 10px !important;
+                font-size: 15px !important;
             }}
 
-            /* ИНПУТ - СВЕТЛЫЙ */
+            /* ИНПУТ - СВЕТЛЫЙ, ШИРОКИЙ */
             div[data-testid="stForm"] [data-testid="stTextInput"] > div {{
                 background: #F0F2F6 !important;
                 border: none !important;
-                border-radius: 10px !important;
-                padding: 5px !important;
+                border-radius: 12px !important;
+                padding: 8px !important;
+                width: 100% !important;
             }}
             
             div[data-testid="stForm"] input {{
                 color: #333333 !important;
+                font-size: 16px !important;
             }}
 
-            /* КНОПКА ВОЙТИ - УВЕЛИЧЕНА И ОТЦЕНТРИРОВАНА */
+            /* КНОПКА ВОЙТИ - НА ВСЮ ШИРИНУ И ПО ЦЕНТРУ (согласно вашим правкам) */
             div[data-testid="stForm"] [data-testid="stFormSubmitButton"] {{
                 text-align: center !important;
-                margin-top: 25px !important;
+                margin-top: 30px !important;
                 width: 100% !important;
             }}
             
             div[data-testid="stForm"] [data-testid="stFormSubmitButton"] button {{
                 background: linear-gradient(135deg, #A886F4 0%, #F17581 100%) !important;
-                color: white !important;
+                color: #FFFFFF !important;
                 border: none !important;
-                height: 48px !important;
-                width: 100% !important; /* Кнопка теперь на всю ширину карточки */
+                height: 52px !important;
+                width: 100% !important; /* Кнопка растянута на всю ширину */
                 font-weight: 600 !important;
-                font-size: 16px !important;
+                font-size: 17px !important;
                 border-radius: 12px !important;
-                transition: transform 0.2s, opacity 0.2s;
-                display: block !important;
+                transition: all 0.3s ease;
+                box-shadow: 0 4px 15px rgba(168, 134, 244, 0.3) !important;
             }}
             
             div[data-testid="stForm"] [data-testid="stFormSubmitButton"] button:hover {{
-                opacity: 0.9;
-                transform: translateY(-1px);
+                transform: translateY(-2px) !important;
+                box-shadow: 0 6px 20px rgba(168, 134, 244, 0.4) !important;
+                opacity: 0.95;
             }}
 
             .login-logo {{
                 display: block;
                 margin: 0 auto 15px;
-                max-width: 220px;
-                filter: brightness(1.2);
+                max-width: 240px;
+                filter: brightness(1.1);
             }}
             .login-subtitle {{
-                color: #CCCCCC;
+                color: #EEEEEE;
                 text-align: center;
                 font-size: 14px;
-                margin-bottom: 25px;
+                margin-bottom: 30px;
+                line-height: 1.4;
             }}
             </style>
             """,
@@ -125,7 +131,7 @@ def check_password():
         with st.form("login_form"):
             if logo_b64:
                 st.markdown(f"<img class='login-logo' src='data:image/png;base64,{logo_b64}'>", unsafe_allow_html=True)
-            st.markdown("<p class='login-subtitle'>Введите ваш персональный код доступа.</p>", unsafe_allow_html=True)
+            st.markdown("<p class='login-subtitle'>Введите ваш персональный код доступа для входа в систему.</p>", unsafe_allow_html=True)
             pwd = st.text_input("Код доступа", type="password", placeholder="Введите код")
             submitted = st.form_submit_button("Войти")
             
@@ -138,10 +144,10 @@ def check_password():
                     st.session_state.user_api_key = user_info.get("key", "")
                     st.rerun()
                 else:
-                    st.error("❌ Код не опознан")
+                    st.error("❌ Неверный код доступа")
         st.stop()
 
-# --- ОСНОВНОЙ ИНТЕРФЕЙС (после входа) ---
+# --- ОСНОВНОЙ ИНТЕРФЕЙС (после авторизации) ---
 st.set_page_config(page_title="LAZURIT AI Render", layout="wide")
 check_password()
 APPLICATION_TOKEN = st.session_state.user_api_key
@@ -178,7 +184,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# Шапка
+# Шапка системы
 logo_b64_main = _read_b64(LOGO_PATH)
 st.markdown(f"""
     <div class="custom-header">
