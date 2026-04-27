@@ -102,7 +102,7 @@ def check_password():
             }}
             div[data-testid="stForm"] [data-testid="stTextInput"] button:hover {{
                 background: rgba(255, 255, 255, 0.06) !important;
-                color: #FFFFFF !important;
+                color: #0a0a0a !important;
             }}
             div[data-testid="stForm"] [data-testid="stTextInput"] button svg {{
                 fill: currentColor !important;
