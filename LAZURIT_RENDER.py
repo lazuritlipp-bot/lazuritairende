@@ -39,95 +39,80 @@ def check_password():
             [data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"], header {{ display: none !important; }}
             .stApp {{ {bg_css} }}
             
+            /* Центрирование контейнера формы */
             .block-container {{
                 padding-top: 0 !important;
                 max-width: 100% !important;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                height: 100vh !important;
+                display: flex !important;
+                justify-content: center !important;
+                align-items: center !important;
+                min-height: 100vh !important;
             }}
 
             /* Карточка логина */
             div[data-testid="stForm"] {{
-                width: 400px !important;
-                height: auto !important;
+                width: 420px !important;
                 background: rgba(255, 255, 255, 0.95) !important;
                 backdrop-filter: blur(15px);
-                border-radius: 20px !important;
-                padding: 40px !important;
-                box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3) !important;
+                border-radius: 22px !important;
+                padding: 35px !important;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4) !important;
                 border: 1px solid rgba(255, 255, 255, 0.3) !important;
-                flex-grow: 0 !important;
             }}
             
-            /* Убираем растягивание вертикального блока внутри формы */
-            div[data-testid="stForm"] [data-testid="stVerticalBlock"] {{
-                gap: 15px !important;
-            }}
-
             div[data-testid="stForm"] label {{
                 color: #000000 !important;
                 font-weight: 600 !important;
                 font-size: 14px !important;
-                margin-bottom: 5px !important;
             }}
 
-            /* Контейнер ввода: черная рамка, скругление, белый фон */
+            /* Поле ввода */
             div[data-testid="stForm"] [data-testid="stTextInput"] > div {{
                 background: white !important;
-                border: 1px solid #000000 !important;
-                border-radius: 12px !important;
-                padding: 2px !important;
+                border: 1px solid #CCC !important;
+                border-radius: 10px !important;
                 overflow: hidden !important;
             }}
 
-            /* Текст ввода - ЧЕРНЫЙ */
             div[data-testid="stForm"] input {{
                 color: #000000 !important; 
                 background: white !important;
-                border: none !important;
-                font-size: 16px !important;
             }}
 
-            /* Глаз - ЧЕРНЫЙ и скругленный */
+            /* Иконка глаза */
             div[data-testid="stForm"] [data-testid="stTextInput"] button {{
-                color: #000000 !important; 
-                background: transparent !important;
-                border: none !important;
-                border-radius: 0 12px 12px 0 !important;
-                margin-right: 5px !important;
+                color: #000 !important; 
             }}
             
             div[data-testid="stForm"] [data-testid="stTextInput"] button svg {{
-                fill: #000000 !important; 
+                fill: #000 !important; 
             }}
 
-            /* Кнопка Войти */
+            /* Кнопка во всю длину */
+            div[data-testid="stForm"] [data-testid="stFormSubmitButton"] {{
+                width: 100% !important;
+            }}
+            
             div[data-testid="stForm"] [data-testid="stFormSubmitButton"] button {{
                 background: linear-gradient(90deg, #A78BFA 0%, #F87171 100%) !important;
                 color: white !important;
                 border: none !important;
-                height: 48px !important;
-                font-weight: 700 !important;
-                border-radius: 12px !important;
+                height: 50px !important;
+                font-weight: 600 !important;
+                border-radius: 10px !important;
                 width: 100% !important;
-                margin-top: 10px !important;
-                text-transform: uppercase;
-                letter-spacing: 1px;
             }}
 
             .login-logo {{
                 display: block;
-                margin: 0 auto 20px;
+                margin: 0 auto 15px;
                 max-width: 220px;
             }}
             .login-subtitle {{
-                color: #444;
+                color: #333;
                 text-align: center;
                 font-size: 14px;
-                margin-bottom: 25px;
-                font-weight: 400;
+                margin-bottom: 20px;
             }}
             </style>
             """,
@@ -137,9 +122,6 @@ def check_password():
         with st.form("login_form"):
             if logo_b64:
                 st.markdown(f"<img class='login-logo' src='data:image/png;base64,{logo_b64}'>", unsafe_allow_html=True)
-            else:
-                st.markdown("<h2 style='text-align:center; color:black;'>LAZURIT</h2>", unsafe_allow_html=True)
-            
             st.markdown("<p class='login-subtitle'>Введите ваш персональный код доступа.</p>", unsafe_allow_html=True)
             pwd = st.text_input("Код доступа", type="password", placeholder="Ваш код")
             submitted = st.form_submit_button("Войти")
@@ -161,20 +143,18 @@ st.set_page_config(page_title="LAZURIT AI Render", layout="wide")
 check_password()
 APPLICATION_TOKEN = st.session_state.user_api_key
 
+# Возвращаем ваш оригинальный цвет фона и стиль основного интерфейса
 st.markdown("""
     <style>
-    .stApp { background-color: #E8E8E1; }
+    .stApp { background-color: #ffffff; }
     
-    /* Стили основного интерфейса после логина */
     [data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"], header { display: flex !important; }
     
     .block-container { 
-        padding-top: 1.5rem !important; 
+        padding-top: 2rem !important; 
         max-width: 100% !important; 
-        padding-left: 2rem !important; 
-        padding-right: 2rem !important;
-        height: auto !important;
         display: block !important;
+        height: auto !important;
     }
     
     .custom-header { 
@@ -202,7 +182,6 @@ st.markdown("""
     
     .card > b { color: #000000 !important; font-size: 16px; margin-bottom: 10px; display: block; }
     
-    /* Кнопки и инпуты в рабочем интерфейсе */
     div.stButton > button:first-child[kind="primary"] { 
         background: linear-gradient(90deg, #A78BFA 0%, #F87171 100%) !important; 
         color: white !important; 
