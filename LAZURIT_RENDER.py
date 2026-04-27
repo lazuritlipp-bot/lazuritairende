@@ -51,60 +51,64 @@ def check_password():
                 top: 0; left: 0; right: 0; bottom: 0;
             }}
 
-            /* Карточка логина */
+            /* Карточка логина - Чистый белый цвет и фиксированная ширина */
             div[data-testid="stForm"] {{
-                width: 420px !important;
-                background: rgba(255, 255, 255, 0.95) !important;
-                backdrop-filter: blur(15px);
-                border-radius: 22px !important;
-                padding: 40px !important;
-                box-shadow: 0 25px 65px rgba(0, 0, 0, 0.5) !important;
-                border: 1px solid rgba(255, 255, 255, 0.3) !important;
+                width: 440px !important;
+                background: #FFFFFF !important;
+                border-radius: 25px !important;
+                padding: 45px !important;
+                box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2) !important;
+                border: none !important;
                 margin: auto !important;
             }}
             
             div[data-testid="stForm"] label {{
-                color: #000000 !important;
-                font-weight: 600 !important;
+                color: #333333 !important;
+                font-weight: 500 !important;
+                margin-bottom: 8px !important;
+                font-size: 14px !important;
             }}
 
             /* Стилизация инпута */
             div[data-testid="stForm"] [data-testid="stTextInput"] > div {{
-                background: white !important;
-                border: 1px solid #CCC !important;
+                background: #F0F2F6 !important;
+                border: 1px solid #E0E0E0 !important;
                 border-radius: 12px !important;
+                padding: 2px 5px !important;
             }}
 
             div[data-testid="stForm"] input {{
                 color: #000000 !important; 
             }}
 
-            /* Кнопка войти - на всю ширину */
+            /* Кнопка войти - Короткая, как на скриншоте */
             div[data-testid="stForm"] [data-testid="stFormSubmitButton"] {{
-                width: 100% !important;
+                width: auto !important;
+                text-align: left !important;
             }}
             
             div[data-testid="stForm"] [data-testid="stFormSubmitButton"] button {{
                 background: linear-gradient(90deg, #A78BFA 0%, #F87171 100%) !important;
                 color: white !important;
                 border: none !important;
-                height: 50px !important;
-                font-weight: 600 !important;
+                height: 44px !important;
+                padding: 0 35px !important;
+                font-weight: 500 !important;
                 border-radius: 10px !important;
-                width: 100% !important;
-                margin-top: 10px;
+                width: auto !important;
+                margin-top: 15px;
             }}
 
             .login-logo {{
                 display: block;
-                margin: 0 auto 15px;
-                max-width: 240px;
+                margin: 0 auto 10px;
+                max-width: 220px;
             }}
             .login-subtitle {{
-                color: #333;
+                color: #555;
                 text-align: center;
                 font-size: 14px;
-                margin-bottom: 25px;
+                margin-bottom: 30px;
             }}
             </style>
             """,
@@ -135,7 +139,7 @@ st.set_page_config(page_title="LAZURIT AI Render", layout="wide")
 check_password()
 APPLICATION_TOKEN = st.session_state.user_api_key
 
-# ВОЗВРАЩАЕМ ОРИГИНАЛЬНЫЙ ЦВЕТ ФОНА И ИНТЕРФЕЙСА (#E8E8E1)
+# ОСНОВНОЙ ЦВЕТ ФОНА ПРИЛОЖЕНИЯ
 st.markdown("""
     <style>
     .stApp { background-color: #E8E8E1; }
@@ -147,6 +151,8 @@ st.markdown("""
         max-width: 100% !important; 
         display: block !important;
         height: auto !important;
+        position: relative !important;
+        background: transparent !important;
     }
     
     .custom-header { 
@@ -240,7 +246,6 @@ with col_left:
     PRESET_NAMES = ["Студия", "День", "Вечер", "Аксуары"]
     PRESET_PATHS = ["icons/studio.png", "icons/den.png", "icons/vecher.png", "icons/acsesoar.png"]
 
-    # Использование image_select для иконок
     selected_idx = image_select(
         label="",
         images=PRESET_PATHS,
