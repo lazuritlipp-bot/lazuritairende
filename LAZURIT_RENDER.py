@@ -6,6 +6,13 @@ from streamlit_image_select import image_select
 # --- ИНИЦИАЛИЗАЦИЯ ---
 st.set_page_config(page_title="LAZURIT AI Render", layout="wide")
 
+# Обработка выхода через URL (перед всеми проверками состояния)
+if st.query_params.get("logout") == "true":
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
+    st.query_params.clear()
+    st.rerun()
+
 # --- КОНФИГУРАЦИЯ ---
 BASE_URL = "https://lzrt-nocode.gpt.mws.ru/api/v1/run/bf1dc235-5c36-4bba-8d7e-a88cd5e19bd6?stream=false"
 LOGO_PATH = "logo2.png"
@@ -22,7 +29,7 @@ def _read_b64(path):
 def image_to_base64(image_bytes):
     return base64.b64encode(image_bytes).decode('utf-8')
 
-# --- ЭКРАН ВХОДА ---
+# --- ЭКРАН ВХОДА (чистый вариант) ---
 def check_password():
     if "authenticated" not in st.session_state:
         st.session_state.authenticated = False
@@ -100,18 +107,17 @@ def logout():
         del st.session_state[key]
     st.rerun()
 
-# --- СТИЛИ РАБОЧЕЙ ОБЛАСТИ ---
+# --- СТИЛИ РАБОЧЕЙ ОБЛАСТИ (с кнопкой внутри шапки) ---
 st.markdown("""
     <style>
     .stApp { background-color: #E8E8E1; }
     .block-container { padding-top: 1rem !important; max-width: 100% !important; padding-left: 2rem !important; padding-right: 2rem !important; }
     
-    /* ИЗМЕНЕННАЯ ШАПКА - Даем место под кнопку */
     .custom-header { 
         background-color: white; 
-        padding: 15px 30px 45px 30px; /* Увеличен отступ снизу для кнопки */
+        padding: 15px 30px 45px 30px;
         border-radius: 12px; 
-        position: relative; /* Чтобы логотип зафиксировать абсолютно */
+        position: relative;
         margin-bottom: 0px; 
         border: 1px solid #D1D1D1; 
         min-height: 100px; 
@@ -124,15 +130,15 @@ st.markdown("""
         position: absolute;
         right: 30px;
         top: 50%;
-        transform: translateY(-50%); /* Логотип всегда строго по центру справа */
+        transform: translateY(-50%);
     }
     
-    /* МАГИЯ: ТЯНЕМ КНОПКУ ВЫХОДА ВНУТРЬ ШАПКИ */
+    /* Кнопка выхода втягивается внутрь шапки */
     div.element-container:has(.logout-marker) { display: none; }
     div.element-container:has(.logout-marker) + div.element-container {
-        margin-top: -60px !important; /* Тянем кнопку вверх, внутрь шапки */
-        margin-left: 30px !important; /* Выравниваем по тексту */
-        margin-bottom: 25px !important; /* Отступ до нижних блоков */
+        margin-top: -60px !important;
+        margin-left: 30px !important;
+        margin-bottom: 25px !important;
         position: relative;
         z-index: 10;
         width: fit-content;
@@ -154,7 +160,6 @@ st.markdown("""
         border-color: #FF4B4B !important;
     }
 
-    /* ОСТАЛЬНЫЕ СТИЛИ */
     .card { background-color: #F8F9FA; border-radius: 15px; padding: 20px; border: 1px solid #E0E0E0; margin-bottom: 15px; }
     .card > b { color: #000000 !important; }
     div[data-testid="stHorizontalBlock"] button { background-color: #FFFFFF !important; color: #333 !important; border: 1px solid #CCC !important; font-size: 12px !important; padding: 4px 6px !important; }
@@ -192,7 +197,7 @@ def process_image(img_b64, user_prompt):
     headers = {"Authorization": f"Bearer {APPLICATION_TOKEN}", "x-api-key": APPLICATION_TOKEN, "Content-Type": "application/json"}
     return requests.post(BASE_URL, json=payload, headers=headers).json()
 
-# --- ШАПКА (чистый HTML, логотип закреплен справа) ---
+# --- ШАПКА ---
 logo_b64_main = _read_b64(LOGO_PATH)
 st.markdown(f"""
     <div class="custom-header">
@@ -201,7 +206,7 @@ st.markdown(f"""
     </div>
     """, unsafe_allow_html=True)
 
-# --- КНОПКА ВЫХОДА (втягивается внутрь шапки через CSS-маркер) ---
+# --- КНОПКА ВЫХОДА (внутри шапки) ---
 st.markdown('<div class="logout-marker"></div>', unsafe_allow_html=True)
 if st.button("🚪 Выйти", key="logout_btn"):
     logout()
@@ -286,11 +291,3 @@ with col_hist:
 if st.session_state.last_response:
     with st.expander("🛠 Лог"):
         st.text(st.session_state.last_response)
-```
-
-**Что изменилось под капотом:**
-1. У шапки убраны `st.columns`, она снова стала монолитным, неразрушимым HTML-блоком.
-2. В CSS шапки добавлено `padding: 15px 30px 45px 30px;` (отступ снизу), чтобы искусственно создать пустое место под текстом. Логотип закреплен справа через `position: absolute`.
-3. Кнопка "Выйти" рендерится под шапкой, но CSS-свойство `margin-top: -60px;` физически поднимает её вверх, прямо в то самое пустое место внутри белой рамки. 
-
-Теперь кнопка на месте, а дизайн выглядит идеально монолитно.
