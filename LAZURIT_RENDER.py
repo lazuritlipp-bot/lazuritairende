@@ -61,6 +61,7 @@ def check_password():
                 margin: auto !important;
                 display: flex !important;
                 flex-direction: column !important;
+                align-items: center !important; /* Центрируем содержимое */
             }}
             
             div[data-testid="stForm"] label {{
@@ -68,6 +69,7 @@ def check_password():
                 font-weight: 500 !important;
                 margin-bottom: 8px !important;
                 font-size: 15px !important;
+                align-self: flex-start !important;
             }}
 
             /* ИНПУТ - СВЕТЛЫЙ, РАСТЯНУТЫЙ */
@@ -89,9 +91,11 @@ def check_password():
                 font-size: 16px !important;
             }}
 
-            /* КНОПКА ВОЙТИ - ЖЕСТКОЕ РАСШИРЕНИЕ НА ВСЮ ШИРИНУ */
+            /* КНОПКА ВОЙТИ - ЦЕНТРИРОВАНИЕ И ПОЛНАЯ ШИРИНА */
             div[data-testid="stForm"] [data-testid="stFormSubmitButton"] {{
                 width: 100% !important;
+                display: flex !important;
+                justify-content: center !important;
                 margin-top: 15px !important;
             }}
             
@@ -113,6 +117,7 @@ def check_password():
                 display: flex !important;
                 justify-content: center !important;
                 align-items: center !important;
+                margin: 0 auto !important;
             }}
             
             div[data-testid="stForm"] [data-testid="stFormSubmitButton"] button:hover {{
