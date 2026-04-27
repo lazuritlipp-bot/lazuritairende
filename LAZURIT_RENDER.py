@@ -93,7 +93,7 @@ def check_password():
             /* Кнопка показа пароля внутри инпута — прозрачная, не градиентная */
             div[data-testid="stForm"] [data-testid="stTextInput"] button {{
                 background: transparent !important;
-                color: rgba(255, 255, 255, 0.7) !important;
+                color: rgba(255, 255, 255, 0.12) !important;
                 border: none !important;
                 box-shadow: none !important;
                 width: auto !important;
