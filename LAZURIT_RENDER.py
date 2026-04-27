@@ -6,28 +6,21 @@ from pathlib import Path
 import requests
 import streamlit as st
 
-
 BASE_URL = "https://lzrt-nocode.gpt.mws.ru/api/v1/run/bf1dc235-5c36-4bba-8d7e-a88cd5e19bd6?stream=false"
 
 ROOT = Path(__file__).resolve().parent
 LOGO_PATH = ROOT / "logo2.png"
 
-BUTTONS = {
-    "den": ("Дневной", "den.png", "Natural bright daylight from windows, soft sun rays."),
-    "studio": ("Студийный", "studio.png", "Professional architectural studio lighting, balanced fills."),
-    "vecher": ("Вечерний", "vecher.png", "Warm cozy evening light, mix of interior lamps and dusk."),
-    "acsesoar": ("Аксессуары", "acsesoar.png", "Add premium accessories and decor, lived-in details, stylish props."),
-    "svoi": ("Свой", "svoi.png", ""),
+ICON_FILES = {
+    "Базовый": None,
+    "Свой": "svoi.png",
+    "Дневной": "den.png",
+    "Студия": "studio.png",
+    "Вечер": "vecher.png",
+    "Аксессуары": "acsesoar.png",
 }
-BUTTON_ORDER = ["den", "studio", "vecher", "acsesoar", "svoi"]
 
-BASE_PHOTO_PROMPT = (
-    "Masterpiece, 8k resolution, photorealistic interior photography, Architectural Digest style. "
-    "Maintain the original color palette and materials of the furniture strictly. Enhance existing textures "
-    "(wood grain, stone, fabric) without changing their color. Replace flat lighting with professional cinematic "
-    "studio lighting and realistic global illumination. Add natural soft sunlight and deep realistic shadows to create depth. "
-    "High-contrast, sharp details, realistic reflections on surfaces. Ensure 100% photorealism, Architectural Digest style."
-)
+ICON_ORDER = ["Дневной", "Студия", "Вечер", "Аксессуары", "Свой"]
 
 
 def file_to_b64(path: Path) -> str:
@@ -64,11 +57,10 @@ def clear_query_params():
     try:
         st.query_params.clear()
     except Exception:
-        st.experimental_set_query_params(**{})
+        st.experimental_set_query_params()
 
 
 def get_app_root() -> str:
-    # Делает абсолютный корень для ссылок, чтобы не уходить в /~/+/
     base_path = ""
     try:
         base_path = st.get_option("server.baseUrlPath") or ""
@@ -82,17 +74,6 @@ def get_app_root() -> str:
     if not base_path.endswith("/"):
         base_path += "/"
     return base_path
-
-
-def process_image(img_b64: str, user_prompt: str, mime: str):
-    combined_input = f"{user_prompt}|||data:{mime};base64,{img_b64}"
-    payload = {"input_value": combined_input, "output_type": "chat", "input_type": "chat"}
-    headers = {
-        "Authorization": f"Bearer {APPLICATION_TOKEN}",
-        "x-api-key": APPLICATION_TOKEN,
-        "Content-Type": "application/json",
-    }
-    return requests.post(BASE_URL, json=payload, headers=headers).json()
 
 
 def check_password():
@@ -118,15 +99,28 @@ def check_password():
         st.stop()
 
 
-def apply_mode(mode_code: str):
-    if mode_code not in BUTTONS:
-        return
-    st.session_state.selected_mode = mode_code
-    _label, _icon, add_text = BUTTONS[mode_code]
-    if mode_code == "svoi":
-        st.session_state.current_prompt = st.session_state.custom_prompt
+def process_image(img_b64: str, user_prompt: str, mime: str):
+    combined_input = f"{user_prompt}|||data:{mime};base64,{img_b64}"
+    payload = {"input_value": combined_input, "output_type": "chat", "input_type": "chat"}
+    headers = {
+        "Authorization": f"Bearer {APPLICATION_TOKEN}",
+        "x-api-key": APPLICATION_TOKEN,
+        "Content-Type": "application/json",
+    }
+    return requests.post(BASE_URL, json=payload, headers=headers).json()
+
+
+def set_preset(preset_name: str, PROMPT_PRESETS: dict):
+    st.session_state.selected_preset = preset_name
+    if preset_name == "Свой":
+        st.session_state.prompt_text = st.session_state.custom_prompt
     else:
-        st.session_state.current_prompt = f"{add_text} {BASE_PHOTO_PROMPT}".strip()
+        st.session_state.prompt_text = PROMPT_PRESETS.get(preset_name, st.session_state.prompt_text)
+
+
+def on_prompt_change():
+    if st.session_state.selected_preset == "Свой":
+        st.session_state.custom_prompt = st.session_state.prompt_text
 
 
 st.set_page_config(page_title="LAZURIT AI Render", layout="wide")
@@ -134,19 +128,41 @@ check_password()
 APPLICATION_TOKEN = st.session_state.user_api_key
 APP_ROOT = get_app_root()
 
+BASE_PHOTO_PROMPT = (
+    "Masterpiece, 8k resolution, photorealistic interior photography, Architectural Digest style. "
+    "Maintain the original color palette and materials of the furniture strictly. Enhance existing textures "
+    "(wood grain, stone, fabric) without changing their color. Replace flat lighting with professional cinematic "
+    "studio lighting and realistic global illumination. Add natural soft sunlight and deep realistic shadows to create depth. "
+    "High-contrast, sharp details, realistic reflections on surfaces. Ensure 100% photorealism, Architectural Digest style."
+)
+
+PROMPT_PRESETS = {
+    "Базовый": f"{BASE_PHOTO_PROMPT}",
+    "Свой": "",
+    "Дневной": f"Natural bright daylight from windows, soft sun rays. {BASE_PHOTO_PROMPT}",
+    "Студия": f"Professional architectural studio lighting, balanced fills. {BASE_PHOTO_PROMPT}",
+    "Вечер": f"Warm cozy evening light, mix of interior lamps and dusk. {BASE_PHOTO_PROMPT}",
+    "Аксессуары": (
+        "Add tasteful accessories and decor (plants, vases, books, artworks, textiles), make the interior look lived-in and premium. "
+        "Do NOT change the furniture design or layout. "
+        f"{BASE_PHOTO_PROMPT}"
+    ),
+}
+
 if "history" not in st.session_state:
     st.session_state.history = []
-if "current_prompt" not in st.session_state:
-    st.session_state.current_prompt = BASE_PHOTO_PROMPT
-if "selected_mode" not in st.session_state:
-    st.session_state.selected_mode = "den"
-if "custom_prompt" not in st.session_state:
-    st.session_state.custom_prompt = ""
 if "last_response" not in st.session_state:
     st.session_state.last_response = ""
+if "selected_preset" not in st.session_state:
+    st.session_state.selected_preset = "Базовый"
+if "custom_prompt" not in st.session_state:
+    st.session_state.custom_prompt = ""
+if "prompt_text" not in st.session_state:
+    st.session_state.prompt_text = PROMPT_PRESETS["Базовый"]
 
 st.markdown(
-    """<style>
+    """
+<style>
 .stApp { background-color: #E8E8E1; }
 .block-container { padding-top: 1rem !important; }
 
@@ -207,6 +223,7 @@ div.stButton > button:first-child[kind="primary"] {
     margin-top: 6px;
     margin-bottom: 10px;
 }
+
 .icon-btn {
     width: 82px;
     height: 82px;
@@ -223,6 +240,7 @@ div.stButton > button:first-child[kind="primary"] {
     user-select:none;
     -webkit-tap-highlight-color: transparent;
 }
+
 .icon-btn img {
     width: 56px;
     height: 56px;
@@ -235,24 +253,35 @@ div.stButton > button:first-child[kind="primary"] {
 .icon-btn:active { transform: scale(0.98); }
 .icon-btn.active { outline: 3px solid rgba(167,139,250,0.55); }
 */
-</style>""",
+</style>
+""",
     unsafe_allow_html=True,
 )
 
-clicked_mode = get_query_param("preset")
-if clicked_mode:
-    apply_mode(clicked_mode)
+clicked = get_query_param("preset")
+if clicked:
+    code_to_preset = {
+        "den": "Дневной",
+        "studio": "Студия",
+        "vecher": "Вечер",
+        "acsesoar": "Аксессуары",
+        "svoi": "Свой",
+        "base": "Базовый",
+    }
+    preset_name = code_to_preset.get(clicked)
+    if preset_name:
+        set_preset(preset_name, PROMPT_PRESETS)
     clear_query_params()
 
 logo_url = file_to_data_url(LOGO_PATH)
 logo_img = f"<img src='{logo_url}' class='header-logo' />" if logo_url else ""
-header_html = (
+st.markdown(
     "<div class='custom-header'>"
     f"<div style='color:#444; font-size:18px;'><b>{st.session_state.user_role}!</b> Добро пожаловать в Lazurit AI Render</div>"
     f"{logo_img}"
-    "</div>"
+    "</div>",
+    unsafe_allow_html=True,
 )
-st.markdown(header_html, unsafe_allow_html=True)
 
 col_left, col_main, col_hist = st.columns([1.2, 2.5, 0.6])
 
@@ -267,19 +296,33 @@ with col_left:
 
     missing = []
     tiles = []
-    for code in BUTTON_ORDER:
-        label, icon_file, _add = BUTTONS[code]
+
+    preset_to_code = {
+        "Дневной": "den",
+        "Студия": "studio",
+        "Вечер": "vecher",
+        "Аксессуары": "acsesoar",
+        "Свой": "svoi",
+        "Базовый": "base",
+    }
+
+    for preset_name in ICON_ORDER:
+        icon_file = ICON_FILES.get(preset_name)
+        if not icon_file:
+            continue
+
         icon_path = ROOT / icon_file
         if not icon_path.exists():
             missing.append(icon_file)
             continue
 
         icon_url = file_to_data_url(icon_path)
+        code = preset_to_code[preset_name]
 
-        # КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: абсолютный путь (через APP_ROOT), а не "?preset=..."
+        # КЛЮЧЕВОЕ: target="_self" чтобы не открывалась новая вкладка
         tiles.append(
-            f'<a class="icon-btn" href="{APP_ROOT}?preset={code}" title="{label}">'
-            f'<img src="{icon_url}" alt="{label}"></a>'
+            f'<a class="icon-btn" target="_self" href="{APP_ROOT}?preset={code}" title="{preset_name}">'
+            f'<img src="{icon_url}" alt="{preset_name}"></a>'
         )
 
     if missing:
@@ -290,10 +333,7 @@ with col_left:
 
     st.markdown("</div>", unsafe_allow_html=True)
 
-    user_text = st.text_area("ТЗ промпта:", value=st.session_state.current_prompt, height=200)
-
-    if st.session_state.selected_mode == "svoi":
-        st.session_state.custom_prompt = user_text
+    st.text_area("ТЗ промпта:", key="prompt_text", height=200, on_change=on_prompt_change)
 
     if st.button("ГЕНЕРИРОВАТЬ AI ИЗОБРАЖЕНИЕ", use_container_width=True, type="primary"):
         if not f:
@@ -305,7 +345,7 @@ with col_left:
                     mime = getattr(f, "type", None) or "image/jpeg"
                     img_b64 = image_to_base64(f.read())
 
-                    res = process_image(img_b64, user_text, mime=mime)
+                    res = process_image(img_b64, st.session_state.prompt_text, mime=mime)
 
                     if "outputs" in res:
                         msg = res["outputs"][0]["outputs"][0]["results"]["message"]["text"]
