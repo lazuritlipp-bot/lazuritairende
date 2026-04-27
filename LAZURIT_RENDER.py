@@ -114,7 +114,6 @@ st.markdown("""
     <style>
     .stApp { background-color: #E8E8E1; }
     
-    /* ПОЛНОСТЬЮ СКРЫВАЕМ ВЕРХНЮЮ ПОЛОСУ STREAMLIT */
     header, [data-testid="stHeader"], [data-testid="stToolbar"] {
         display: none !important;
         visibility: hidden !important;
@@ -181,6 +180,17 @@ st.markdown("""
     iframe[title*="streamlit_image_select"] { background: transparent !important; }
     div.stButton > button:first-child[kind="primary"] { background: linear-gradient(90deg, #A78BFA 0%, #F87171 100%) !important; color: white !important; border: none !important; height: 55px !important; font-size: 18px !important; font-weight: bold !important; }
     .empty-result-card { height: 600px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #888; border: 2px dashed #CCC; }
+
+    /* === ОКРУГЛЫЕ ИКОНКИ === */
+    iframe[title*="streamlit_image_select"] img {
+        border-radius: 18px !important;
+        transition: border-radius 0.3s ease;
+    }
+    iframe[title*="streamlit_image_select"] div[role="option"],
+    iframe[title*="streamlit_image_select"] button {
+        border-radius: 18px !important;
+        overflow: hidden !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -226,8 +236,8 @@ st.markdown('<div class="logout-marker"></div>', unsafe_allow_html=True)
 if st.button("🚪 Выйти", key="logout_btn"):
     logout()
 
-# --- РАБОЧАЯ ОБЛАСТЬ ---
-col_left, col_main, col_hist = st.columns([2.2, 2.2, 0.6])
+# --- РАБОЧАЯ ОБЛАСТЬ (сужаем правую часть) ---
+col_left, col_main, col_hist = st.columns([2, 1.2, 0.4])
 
 with col_left:
     st.markdown('<div class="card"><b>1. Загрузка</b>', unsafe_allow_html=True)
