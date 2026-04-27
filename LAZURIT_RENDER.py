@@ -4,7 +4,7 @@ import base64
 
 # --- КОНФИГУРАЦИЯ ---
 BASE_URL = "https://lzrt-nocode.gpt.mws.ru/api/v1/run/bf1dc235-5c36-4bba-8d7e-a88cd5e19bd6?stream=false"
-LOGO_PATH = "logo2.jpg"
+LOGO_PATH = "logo2.png"
 
 # --- СИСТЕМА ЛИЧНЫХ ДОСТУПОВ ---
 def check_password():
