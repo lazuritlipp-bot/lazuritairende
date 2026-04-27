@@ -31,34 +31,53 @@ def check_password():
     if not st.session_state.authenticated:
         bg_b64 = _read_b64(BACKGROUND_PATH)
         logo_b64 = _read_b64(LOGO_PATH)
-        bg_css = f"background: url('data:image/png;base64,{bg_b64}') center/cover no-repeat fixed, #0E1117;" if bg_b64 else "background: #0E1117;"
+        bg_css = (
+            f"background: url('data:image/png;base64,{bg_b64}') center/cover no-repeat fixed, #0E1117;"
+            if bg_b64 else "background: #0E1117;"
+        )
         st.markdown(f"""
             <style>
-            [data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"], header, [data-testid="stHeader"] {{ display: none !important; }}
+            [data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"],
+            header, [data-testid="stHeader"] {{ display: none !important; }}
             .stApp {{ {bg_css} }}
             .block-container {{ padding: 0 !important; max-width: 100% !important; }}
             div[data-testid="stForm"] {{
                 position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-                width: 420px; background: rgba(30, 30, 32, 0.82) !important;
-                backdrop-filter: blur(14px); border-radius: 22px; padding: 30px !important;
-                box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55); border: 1px solid rgba(255, 255, 255, 0.08) !important;
+                width: 420px; max-width: 92vw; background: rgba(30,30,32,0.82) !important;
+                backdrop-filter: blur(14px); border-radius: 22px; padding: 28px 32px 24px !important;
+                box-shadow: 0 24px 70px rgba(0,0,0,0.55);
+                border: 1px solid rgba(255,255,255,0.08) !important; z-index: 9999;
             }}
-            div[data-testid="stForm"] input {{ background: rgba(255, 255, 255, 0.06) !important; color: white !important; border-radius: 10px !important; }}
-            div[data-testid="stForm"] button {{ background: linear-gradient(90deg, #A78BFA 0%, #F87171 100%) !important; color: white !important; border-radius: 10px !important; height: 50px !important; }}
-            </style>
-            """, unsafe_allow_html=True)
+            div[data-testid="stForm"] label {{ color: #FFF !important; }}
+            div[data-testid="stForm"] input {{
+                background: rgba(255,255,255,0.06) !important; color: #FFF !important;
+                border: 1px solid rgba(255,255,255,0.12) !important; border-radius: 10px !important;
+                height: 46px !important;
+            }}
+            div[data-testid="stForm"] [data-testid="stFormSubmitButton"] button {{
+                background: linear-gradient(90deg, #A78BFA 0%, #F87171 100%) !important;
+                color: white !important; border: none !important; height: 50px !important;
+                border-radius: 10px !important; width: 100% !important;
+            }}
+            .login-logo {{ display: block; margin: 0 auto 14px; width: 78%; max-width: 320px; }}
+            .login-subtitle {{ color: rgba(255,255,255,0.85); text-align: center; font-size: 14px; margin: 0 0 22px; }}
+            </style>""", unsafe_allow_html=True)
 
-        with st.form("login_form"):
-            if logo_b64: st.markdown(f"<img style='width:300px; display:block; margin: 0 auto 20px;' src='data:image/png;base64,{logo_b64}'>", unsafe_allow_html=True)
-            pwd = st.text_input("Код доступа", type="password")
+        with st.form("login_form", clear_on_submit=False):
+            if logo_b64:
+                st.markdown(f"<img class='login-logo' src='data:image/png;base64,{logo_b64}'>", unsafe_allow_html=True)
+            st.markdown("<p class='login-subtitle'>Введите ваш персональный код доступа.</p>", unsafe_allow_html=True)
+            pwd = st.text_input("Код доступа", type="password", placeholder="Введите код")
             if st.form_submit_button("Войти", use_container_width=True):
                 users_data = st.secrets.get("users", {})
                 if pwd in users_data:
+                    ui = users_data[pwd]
                     st.session_state.authenticated = True
-                    st.session_state.user_role = users_data[pwd].get("name")
-                    st.session_state.user_api_key = users_data[pwd].get("key")
+                    st.session_state.user_role = ui.get("name", "Сотрудник")
+                    st.session_state.user_api_key = ui.get("key", "")
                     st.rerun()
-                else: st.error("❌ Ошибка")
+                else:
+                    st.error("❌ Код не опознан")
         st.stop()
 
 check_password()
@@ -84,120 +103,154 @@ PROMPT_PRESETS = {
     "День": f"Natural bright daylight from windows, soft sun rays. {BASE_PHOTO_PROMPT}",
     "Вечер": f"Warm cozy evening light, mix of interior lamps and dusk. {BASE_PHOTO_PROMPT}",
     "Аксессуары": f"{BASE_PHOTO_PROMPT}",
-    "Свой промт": ""
+    "Свой промт": "",
 }
 
-PRESET_ICONS = ["studio.png", "den.png", "vecher.png", "acsesoar.png"]
 PRESET_NAMES = ["Студия", "День", "Вечер", "Аксессуары"]
+PRESET_ICONS = ["studio.png", "den.png", "vecher.png", "acsesoar.png"]
 
-if 'history' not in st.session_state: st.session_state.history = []
-if 'sel_idx' not in st.session_state: st.session_state.sel_idx = 0
-if 'current_prompt' not in st.session_state: st.session_state.current_prompt = PROMPT_PRESETS["Студия"]
+if "history" not in st.session_state: st.session_state.history = []
+if "sel_idx" not in st.session_state: st.session_state.sel_idx = 0
+if "prompt_text" not in st.session_state: st.session_state.prompt_text = PROMPT_PRESETS["Студия"]
+if "last_response" not in st.session_state: st.session_state.last_response = ""
 
-# --- СТИЛИ ОСНОВНОГО ИНТЕРФЕЙСА ---
-st.markdown(f"""
+def process_image(img_b64, user_prompt):
+    payload = {"input_value": f"{user_prompt}|||data:image/jpeg;base64,{img_b64}", "output_type": "chat", "input_type": "chat"}
+    headers = {"Authorization": f"Bearer {APPLICATION_TOKEN}", "x-api-key": APPLICATION_TOKEN, "Content-Type": "application/json"}
+    return requests.post(BASE_URL, json=payload, headers=headers).json()
+
+# --- СТИЛИ ---
+st.markdown("""
     <style>
-    .stApp {{ background-color: #E8E8E1; }}
-    header, [data-testid="stHeader"] {{ display: none !important; }}
-    .block-container {{ padding-top: 1.2rem !important; max-width: 100% !important; padding-left: 2rem !important; padding-right: 2rem !important; }}
-    
-    .custom-header {{ background: white; padding: 15px 30px 45px 30px; border-radius: 12px; position: relative; border: 1px solid #D1D1D1; min-height: 100px; }}
-    .header-logo {{ height: 80px !important; position: absolute; right: 30px; top: 50%; transform: translateY(-50%); }}
+    .stApp { background-color: #E8E8E1; }
+    header, [data-testid="stHeader"], [data-testid="stToolbar"] {
+        display: none !important; visibility: hidden !important; height: 0 !important;
+    }
+    .block-container {
+        padding-top: 1.2rem !important; max-width: 100% !important;
+        padding-left: 2rem !important; padding-right: 2rem !important;
+    }
 
-    /* Кнопка выхода */
-    div.element-container:has(.logout-marker) {{ display: none; }}
-    div.element-container:has(.logout-marker) + div.element-container {{
-        margin-top: -58px !important; margin-left: 30px !important; position: relative; z-index: 100;
-    }}
-    div.element-container:has(.logout-marker) + div.element-container button {{
-        background: transparent !important; color: #666 !important; border: 1px solid #ccc !important; border-radius: 8px !important; height: 32px !important;
-    }}
+    .custom-header {
+        background: white; padding: 15px 30px 45px 30px; border-radius: 12px;
+        position: relative; border: 1px solid #D1D1D1; min-height: 100px; margin-bottom: 0;
+    }
+    .header-logo {
+        height: 80px !important; position: absolute; right: 30px; top: 50%; transform: translateY(-50%);
+    }
 
-    .card {{ background: #F8F9FA; border-radius: 20px; padding: 20px; border: 1px solid #E0E0E0; margin-bottom: 15px; }}
-    .card > b {{ color: #000 !important; }}
+    /* кнопка выхода */
+    div.element-container:has(.logout-marker) { display: none; }
+    div.element-container:has(.logout-marker) + div.element-container {
+        margin-top: -58px !important; margin-left: 30px !important;
+        margin-bottom: 25px !important; position: relative; z-index: 10; width: fit-content;
+    }
+    div.element-container:has(.logout-marker) + div.element-container button {
+        background: transparent !important; color: #666 !important;
+        border: 1px solid #ccc !important; border-radius: 8px !important; height: 32px !important;
+    }
+    div.element-container:has(.logout-marker) + div.element-container button:hover {
+        background: #FF4B4B !important; color: white !important;
+    }
 
-    /* --- СТИЛИЗАЦИЯ ИКОНОК И ПРОЗРАЧНЫХ КНОПОК --- */
-    
-    .preset-wrapper {{
+    .card {
+        background: #F8F9FA; border-radius: 20px; padding: 20px;
+        border: 1px solid #E0E0E0; margin-bottom: 15px;
+    }
+    .card > b { color: #000 !important; }
+
+    /* === ИКОНКИ-КНОПКИ: прозрачная кнопка поверх картинки === */
+    .icon-wrap {
+        display: flex; flex-direction: column; align-items: center; position: relative;
+    }
+    .icon-wrap img {
+        width: 60px !important; height: 60px !important; object-fit: contain;
+        border-radius: 50% !important; border: 2px solid #D4C4B0;
+        background: white; padding: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+        transition: all 0.2s;
+    }
+    .icon-wrap.active img {
+        border-color: #B8906D !important;
+        box-shadow: 0 0 0 3px rgba(184,144,109,0.2) !important;
+    }
+
+    /* Прозрачная кнопка ПОВЕРХ иконки */
+    .icon-wrap + div.stButton {
+        margin-top: -64px !important;
         position: relative;
-        width: 70px;
-        height: 70px;
-        margin: 0 auto;
-    }}
-
-    /* Визуальный слой (иконка) */
-    .visual-icon {{
-        position: absolute;
-        inset: 0;
-        background: white;
-        border: 2px solid #D4C4B0;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1;
-        transition: 0.2s;
-    }}
-    .preset-wrapper:hover .visual-icon {{ border-color: #B8906D; transform: scale(1.05); }}
-    .active-preset .visual-icon {{ border: 2.5px solid #B8906D; box-shadow: 0 0 10px rgba(184, 144, 109, 0.3); }}
-
-    /* Слой кнопки Streamlit (прозрачный поверх) */
-    .preset-wrapper .stButton button {{
-        position: absolute !important;
-        inset: 0 !important;
-        width: 70px !important;
-        height: 70px !important;
+        z-index: 20;
+    }
+    .icon-wrap + div.stButton button {
+        width: 64px !important;
+        height: 64px !important;
+        min-height: 64px !important;
         background: transparent !important;
-        color: transparent !important;
         border: none !important;
         box-shadow: none !important;
-        z-index: 10 !important;
-        padding: 0 !important;
-        cursor: pointer !important;
-    }}
-
-    /* Свой промт (Овальная кнопка) */
-    .custom-prompt-container {{
-        position: relative;
-        width: 100%;
-        height: 50px;
-        margin-top: 15px;
-    }}
-    .visual-custom-box {{
-        position: absolute;
-        inset: 0;
-        background: white;
-        border: 2px solid #D4C4B0;
-        border-radius: 50px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1;
-        font-weight: bold;
-        color: #4E5966;
-        font-size: 13px;
-    }}
-    .custom-prompt-container:hover .visual-custom-box {{ border-color: #B8906D; }}
-    .active-custom .visual-custom-box {{ border: 2.5px solid #B8906D; }}
-
-    .custom-prompt-container .stButton button {{
-        position: absolute !important;
-        inset: 0 !important;
-        width: 100% !important;
-        height: 50px !important;
-        background: transparent !important;
         color: transparent !important;
-        border: none !important;
-        z-index: 10 !important;
-    }}
+        font-size: 0 !important;
+        border-radius: 50% !important;
+        cursor: pointer !important;
+        padding: 0 !important;
+        margin: 0 auto !important;
+        display: block !important;
+    }
+    .icon-wrap + div.stButton button:hover {
+        background: rgba(184,144,109,0.08) !important;
+    }
+    .icon-wrap + div.stButton button p { display: none !important; }
 
-    /* Главная кнопка */
-    div.stButton > button[kind="primary"] {{ 
-        background: linear-gradient(90deg, #A78BFA 0%, #F87171 100%) !important; 
-        color: white !important; height: 55px !important; font-weight: bold !important; border-radius: 16px !important; width: 100% !important;
-    }}
-    
-    .empty-result-card {{ height: 600px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #888; border: 2px dashed #CCC; border-radius: 24px; }}
+    /* Свой промт иконка */
+    .custom-icon-wrap {
+        display: flex; align-items: center; justify-content: center;
+        position: relative; width: 100%;
+    }
+    .custom-icon-wrap img {
+        width: 100% !important; height: 48px !important; object-fit: contain;
+        border-radius: 999px !important; border: 2px solid #D4C4B0;
+        background: white; padding: 8px 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.04); transition: all 0.2s;
+    }
+    .custom-icon-wrap.active img {
+        border-color: #B8906D !important;
+        box-shadow: 0 0 0 3px rgba(184,144,109,0.2) !important;
+    }
+
+    .custom-icon-wrap + div.stButton {
+        margin-top: -52px !important;
+        position: relative;
+        z-index: 20;
+    }
+    .custom-icon-wrap + div.stButton button {
+        width: 100% !important;
+        height: 52px !important;
+        min-height: 52px !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        color: transparent !important;
+        font-size: 0 !important;
+        border-radius: 999px !important;
+        cursor: pointer !important;
+        padding: 0 !important;
+    }
+    .custom-icon-wrap + div.stButton button:hover {
+        background: rgba(184,144,109,0.06) !important;
+    }
+    .custom-icon-wrap + div.stButton button p { display: none !important; }
+
+    /* Главная кнопка генерации */
+    button[kind="primary"] {
+        background: linear-gradient(90deg, #A78BFA 0%, #F87171 100%) !important;
+        color: white !important; height: 55px !important; font-weight: bold !important;
+        border-radius: 16px !important; font-size: 17px !important;
+    }
+
+    .empty-result-card {
+        height: 600px; display: flex; flex-direction: column;
+        align-items: center; justify-content: center; color: #888;
+        border: 2px dashed #CCC; border-radius: 24px;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -211,9 +264,8 @@ st.markdown(f"""
     """, unsafe_allow_html=True)
 
 st.markdown('<div class="logout-marker"></div>', unsafe_allow_html=True)
-if st.button("🚪 Выйти"):
-    for key in list(st.session_state.keys()): del st.session_state[key]
-    st.rerun()
+if st.button("🚪 Выйти", key="logout_btn"):
+    logout()
 
 # --- РАБОЧАЯ ОБЛАСТЬ ---
 col_left, col_main, col_hist = st.columns([1.2, 2.75, 0.45], gap="small")
@@ -221,75 +273,92 @@ col_left, col_main, col_hist = st.columns([1.2, 2.75, 0.45], gap="small")
 with col_left:
     st.markdown('<div class="card"><b>1. Загрузка</b>', unsafe_allow_html=True)
     f = st.file_uploader("upload", label_visibility="collapsed")
-    if f: st.image(f, use_container_width=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+    if f:
+        st.image(f, use_container_width=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown('<div class="card"><b>2. Освещение</b>', unsafe_allow_html=True)
-    
-    # 4 КРУГЛЫЕ КНОПКИ
-    cols = st.columns(4)
-    for i in range(4):
-        with cols[i]:
-            active_class = "active-preset" if st.session_state.sel_idx == i else ""
+
+    # === 4 КРУГЛЫЕ ИКОНКИ ===
+    c1, c2, c3, c4 = st.columns(4, gap="small")
+    for i, col in enumerate([c1, c2, c3, c4]):
+        with col:
             icon_b64 = _read_b64(PRESET_ICONS[i])
-            st.markdown(f"""
-                <div class="preset-wrapper {active_class}">
-                    <div class="visual-icon">
-                        <img src="data:image/png;base64,{icon_b64}" style="width:35px;">
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
-            # Прозрачная кнопка ПОВЕРХ
-            if st.button(" ", key=f"btn_{i}"):
+            active = "active" if st.session_state.sel_idx == i else ""
+            if icon_b64:
+                st.markdown(
+                    f'<div class="icon-wrap {active}"><img src="data:image/png;base64,{icon_b64}"></div>',
+                    unsafe_allow_html=True
+                )
+            else:
+                st.markdown(
+                    f'<div class="icon-wrap {active}"><img src=""></div>',
+                    unsafe_allow_html=True
+                )
+            if st.button("ㅤ", key=f"pbtn_{i}"):
                 st.session_state.sel_idx = i
-                st.session_state.current_prompt = PROMPT_PRESETS[PRESET_NAMES[i]]
+                st.session_state.prompt_text = PROMPT_PRESETS[PRESET_NAMES[i]]
                 st.rerun()
 
-    # ОВАЛЬНАЯ КНОПКА "СВОЙ ПРОМТ"
-    custom_active = "active-custom" if st.session_state.sel_idx == -1 else ""
-    svoi_icon_b64 = _read_b64("svoi.png")
-    st.markdown(f"""
-        <div class="custom-prompt-container {custom_active}">
-            <div class="visual-custom-box">
-                <img src="data:image/png;base64,{svoi_icon_b64}" style="height:20px; margin-right:10px;">
-                СВОЙ ПРОМТ (задание)
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-    if st.button(" ", key="btn_custom"):
+    # === КНОПКА СВОЙ ПРОМТ ===
+    svoi_b64 = _read_b64("svoi.png")
+    custom_active = "active" if st.session_state.sel_idx == -1 else ""
+    if svoi_b64:
+        st.markdown(
+            f'<div class="custom-icon-wrap {custom_active}"><img src="data:image/png;base64,{svoi_b64}"></div>',
+            unsafe_allow_html=True
+        )
+    else:
+        st.markdown(
+            f'<div class="custom-icon-wrap {custom_active}"><img src=""></div>',
+            unsafe_allow_html=True
+        )
+    if st.button("ㅤ", key="custom_prompt_btn", use_container_width=True):
         st.session_state.sel_idx = -1
-        st.session_state.current_prompt = PROMPT_PRESETS["Свой промт"]
+        st.session_state.prompt_text = PROMPT_PRESETS["Свой промт"]
         st.rerun()
 
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
-    user_text = st.text_area("ТЗ промпта:", value=st.session_state.current_prompt, height=200)
+    user_text = st.text_area("ТЗ промпта:", key="prompt_text", height=200)
 
     if st.button("ГЕНЕРИРОВАТЬ AI ИЗОБРАЖЕНИЕ", use_container_width=True, type="primary"):
         if f:
             with st.spinner("Генерация..."):
                 try:
                     f.seek(0)
-                    combined_input = f"{user_text}|||data:image/jpeg;base64,{base64.b64encode(f.read()).decode()}"
-                    res = requests.post(BASE_URL, json={"input_value": combined_input, "output_type": "chat", "input_type": "chat"}, 
-                                        headers={"Authorization": f"Bearer {APPLICATION_TOKEN}", "x-api-key": APPLICATION_TOKEN, "Content-Type": "application/json"}).json()
-                    if 'outputs' in res:
-                        msg = res['outputs'][0]['outputs'][0]['results']['message']['text']
-                        raw_data = msg.split("|||")[1] if "|||" in msg else msg
-                        if "base64," in raw_data: raw_data = raw_data.split("base64,")[1]
-                        st.session_state.history.insert(0, base64.b64decode(raw_data.replace('"', '').strip()))
+                    res = process_image(image_to_base64(f.read()), user_text)
+                    if "outputs" in res:
+                        msg = res["outputs"][0]["outputs"][0]["results"]["message"]["text"]
+                        st.session_state.last_response = msg
+                        raw = msg.split("|||")[1] if "|||" in msg else msg
+                        if "base64," in raw: raw = raw.split("base64,")[1]
+                        img_bytes = base64.b64decode(raw.replace('"', "").strip())
+                        st.session_state.history.insert(0, img_bytes)
+                        st.session_state.history = st.session_state.history[:10]
                         st.rerun()
-                except Exception as e: st.error(f"Ошибка: {e}")
-        else: st.warning("Загрузите фото!")
+                except Exception as e:
+                    st.error(f"Ошибка: {e}")
+        else:
+            st.warning("Загрузите фото!")
 
 with col_main:
     if st.session_state.history:
-        st.markdown('<div class="card" style="padding: 10px;">', unsafe_allow_html=True)
-        st.image(st.session_state.history[0], use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown('<div class="card" style="padding:10px;">', unsafe_allow_html=True)
+        st.image(st.session_state.history[0], use_container_width=True, caption="Результат")
+        st.markdown("</div>", unsafe_allow_html=True)
     else:
-        st.markdown('<div class="card empty-result-card"><h1>Результат</h1></div>', unsafe_allow_html=True)
+        st.markdown("""
+            <div class="card empty-result-card">
+                <h1 style="color:#bbb; font-weight:bold;">Результат генерации</h1>
+                <p style="color:#ccc;">Загрузите изображение для начала работы</p>
+            </div>""", unsafe_allow_html=True)
 
 with col_hist:
     st.markdown("<b>История</b>", unsafe_allow_html=True)
-    for img in st.session_state.history[1:6]: st.image(img, use_container_width=True)
+    for img in st.session_state.history[1:6]:
+        st.image(img, use_container_width=True)
+
+if st.session_state.last_response:
+    with st.expander("🛠 Лог"):
+        st.text(st.session_state.last_response)
