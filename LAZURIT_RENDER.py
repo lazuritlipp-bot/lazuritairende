@@ -178,7 +178,7 @@ st.markdown("""
     /* СКРУГЛЕНИЯ И СТИЛИ КАРТОЧЕК */
     .card { 
         background-color: #F8F9FA; 
-        border-radius: 20px;
+        border-radius: 20px; /* Увеличено скругление карточек */
         padding: 20px; 
         border: 1px solid #E0E0E0; 
         margin-bottom: 15px; 
@@ -189,83 +189,23 @@ st.markdown("""
     div[data-testid="stTextArea"] > div > div > textarea { border-radius: 16px !important; }
     div[data-testid="stFileUploader"] > section { border-radius: 16px !important; }
     
-    /* ОКРУГЛЕНИЕ ИКОНОК IMAGE_SELECT В КРУЖОЧКИ */
+    /* Округление самого контейнера image_select */
     iframe[title*="streamlit_image_select"] { 
         background: transparent !important; 
         border-radius: 16px !important;
         overflow: hidden !important;
     }
     
-    /* КРУГЛЫЕ ИКОНКИ - 4 В РЯД */
-    div[data-testid="stHorizontalBlock"] {
-        gap: 10px !important;
-        justify-content: flex-start !important;
-    }
-    
+    /* Скругление кнопок */
     div[data-testid="stHorizontalBlock"] button { 
         background-color: #FFFFFF !important; 
         color: #333 !important; 
-        border: 2px solid #D4C4B0 !important; 
+        border: 1px solid #CCC !important; 
         font-size: 12px !important; 
-        padding: 0 !important;
-        border-radius: 50% !important; /* КРУГЛЫЕ КНОПКИ */
-        width: 70px !important;
-        height: 70px !important;
-        min-width: 70px !important;
-        min-height: 70px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        transition: all 0.2s !important;
+        padding: 4px 6px !important; 
+        border-radius: 10px !important;
     }
     
-    div[data-testid="stHorizontalBlock"] button:hover {
-        border-color: #A78BFA !important;
-        background-color: #F5F0FF !important;
-        transform: scale(1.05);
-    }
-    
-    div[data-testid="stHorizontalBlock"] button img {
-        width: 36px !important;
-        height: 36px !important;
-        object-fit: contain !important;
-    }
-    
-    /* КНОПКА СВОЙ ПРОМТ - ВЫТЯНУТАЯ С ИКОНКОЙ */
-    div.stButton:has(button[key="custom_prompt_btn"]) {
-        width: 100% !important;
-        margin-top: 12px !important;
-    }
-    
-    div.stButton:has(button[key="custom_prompt_btn"]) button {
-        background-color: #FFFFFF !important;
-        color: #666 !important;
-        border: 2px solid #D4C4B0 !important;
-        border-radius: 50px !important; /* ВЫТЯНУТЫЙ ОВАЛ */
-        height: 50px !important;
-        font-size: 14px !important;
-        font-weight: 500 !important;
-        width: 100% !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        gap: 10px !important;
-        transition: all 0.2s !important;
-    }
-    
-    div.stButton:has(button[key="custom_prompt_btn"]) button:hover {
-        border-color: #A78BFA !important;
-        background-color: #F5F0FF !important;
-        color: #A78BFA !important;
-    }
-    
-    div.stButton:has(button[key="custom_prompt_btn"]) button span {
-        display: flex !important;
-        align-items: center !important;
-        gap: 8px !important;
-    }
-    
-    /* Главная кнопка генерации */
     div.stButton > button:first-child[kind="primary"] { 
         background: linear-gradient(90deg, #A78BFA 0%, #F87171 100%) !important; 
         color: white !important; 
@@ -273,7 +213,7 @@ st.markdown("""
         height: 55px !important; 
         font-size: 17px !important; 
         font-weight: bold !important; 
-        border-radius: 16px !important;
+        border-radius: 16px !important; /* Круглая главная кнопка */
     }
     
     .empty-result-card { 
@@ -336,7 +276,8 @@ st.markdown('<div class="logout-marker"></div>', unsafe_allow_html=True)
 if st.button("🚪 Выйти", key="logout_btn"):
     logout()
 
-# --- РАБОЧАЯ ОБЛАСТЬ ---
+# --- РАБОЧАЯ ОБЛАСТЬ (ИЗМЕНЕННЫЕ ПРОПОРЦИИ КОЛОНОК) ---
+# [1.0, 3.5, 0.6] -> Левая колонка стала в 2 раза уже, центральная намного шире
 col_left, col_main, col_hist = st.columns([1.0, 3.5, 0.6])
 
 with col_left:
@@ -346,8 +287,6 @@ with col_left:
     st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown('<div class="card"><b>2. Освещение</b>', unsafe_allow_html=True)
-    
-    # 4 иконки в ряд + svoi.png для кнопки "Свой промт"
     PRESET_NAMES = ["Студия", "День", "Вечер", "Аксессуары"]
     PRESET_PATHS = [
         "studio.png",
@@ -370,24 +309,10 @@ with col_left:
         st.session_state._preset_idx = selected_idx
         st.rerun()
 
-    # Кнопка "Свой промт" с иконкой - отдельно под иконками
-    st.markdown(
-        """
-        <div style="width: 100%; margin-top: 12px;">
-        """,
-        unsafe_allow_html=True
-    )
-    
-    # Читаем иконку для кнопки "Свой промт"
-    svoi_icon_b64 = _read_b64("svoi.png")
-    svoi_icon_html = f'<img src="data:image/png;base64,{svoi_icon_b64}" style="width: 20px; height: 20px;" />' if svoi_icon_b64 else '✏️'
-    
-    if st.button(f"{svoi_icon_html} Свой промт (задание)", key="custom_prompt_btn", use_container_width=True):
+    if st.button("Свой промт", key="custom_prompt_btn", use_container_width=True):
         st.session_state.current_prompt = PROMPT_PRESETS.get("Свой промт", "")
         st.session_state._preset_idx = None
         st.rerun()
-    
-    st.markdown('</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
     user_text = st.text_area("ТЗ промпта:", value=st.session_state.current_prompt, height=200)
