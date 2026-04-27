@@ -238,10 +238,10 @@ with col_left:
     st.markdown('<div class="card"><b>2. Освещение</b>', unsafe_allow_html=True)
     PRESET_NAMES = ["Студия", "День", "Вечер", "Аксессуары"]
     PRESET_PATHS = [
-        "icons/studio.png",
-        "icons/den.png",
-        "icons/vecher.png",
-        "icons/acsesoar.png",
+        "studio.png",
+        "den.png",
+        "vecher.png",
+        "acsesoar.png",
     ]
 
     selected_idx = image_select(
