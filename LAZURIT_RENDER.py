@@ -89,10 +89,14 @@ def check_password():
                 font-size: 16px !important;
             }}
 
-            /* ТА САМАЯ БОЛЬШАЯ КНОПКА ВОЙТИ */
+            /* КНОПКА ВОЙТИ - ЖЕСТКОЕ РАСШИРЕНИЕ НА ВСЮ ШИРИНУ */
             div[data-testid="stForm"] [data-testid="stFormSubmitButton"] {{
                 width: 100% !important;
                 margin-top: 15px !important;
+            }}
+            
+            div[data-testid="stForm"] [data-testid="stFormSubmitButton"] > div {{
+                width: 100% !important;
             }}
             
             div[data-testid="stForm"] [data-testid="stFormSubmitButton"] button {{
@@ -101,11 +105,14 @@ def check_password():
                 border: none !important;
                 height: 62px !important;
                 width: 100% !important;
+                min-width: 100% !important;
                 font-weight: 600 !important;
                 font-size: 19px !important;
                 border-radius: 14px !important;
                 transition: all 0.2s ease;
-                display: block !important;
+                display: flex !important;
+                justify-content: center !important;
+                align-items: center !important;
             }}
             
             div[data-testid="stForm"] [data-testid="stFormSubmitButton"] button:hover {{
