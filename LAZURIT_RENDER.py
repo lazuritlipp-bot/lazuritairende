@@ -4,7 +4,14 @@ import base64
 from streamlit_image_select import image_select
 
 # --- ИНИЦИАЛИЗАЦИЯ ---
-st.set_page_config(page_title="LAZURIT AI Render", layout="wide")
+st.set_page_config(page_title="LAZURIT AI Render", layout="wide", initial_sidebar_state="collapsed")
+
+# Обработка выхода через URL
+if st.query_params.get("logout") == "true":
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
+    st.query_params.clear()
+    st.rerun()
 
 # --- КОНФИГУРАЦИЯ ---
 BASE_URL = "https://lzrt-nocode.gpt.mws.ru/api/v1/run/bf1dc235-5c36-4bba-8d7e-a88cd5e19bd6?stream=false"
@@ -22,7 +29,7 @@ def _read_b64(path):
 def image_to_base64(image_bytes):
     return base64.b64encode(image_bytes).decode('utf-8')
 
-# --- ЭКРАН ВХОДА (УПРОЩЕННЫЙ СТИЛЬ) ---
+# --- ЭКРАН ВХОДА ---
 def check_password():
     if "authenticated" not in st.session_state:
         st.session_state.authenticated = False
@@ -37,12 +44,12 @@ def check_password():
             if bg_b64
             else "background: #0E1117;"
         )
-        
-        # Стили из вашего второго кода (чистые, без лишних правил)
         st.markdown(
             f"""
             <style>
-            [data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"], header {{ display: none !important; }}
+            [data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"], header, [data-testid="stHeader"] {{ 
+                display: none !important; 
+            }}
             .stApp {{ {bg_css} }}
             .block-container {{ padding-top: 0 !important; padding-bottom: 0 !important; max-width: 100% !important; }}
 
@@ -55,22 +62,18 @@ def check_password():
                 box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55);
                 border: 1px solid rgba(255, 255, 255, 0.08) !important; z-index: 9999;
             }}
-            
             div[data-testid="stForm"] label {{ color: #FFFFFF !important; font-weight: 500; font-size: 14px; }}
-            
             div[data-testid="stForm"] input {{
                 background: rgba(255, 255, 255, 0.06) !important; color: #FFFFFF !important;
                 border: 1px solid rgba(255, 255, 255, 0.12) !important; border-radius: 10px !important;
                 height: 46px !important; padding: 0 14px !important; width: 100% !important;
             }}
-            
             div[data-testid="stForm"] [data-testid="stFormSubmitButton"] button {{
                 background: linear-gradient(90deg, #A78BFA 0%, #F87171 100%) !important;
                 color: white !important; border: none !important; height: 50px !important;
                 font-weight: 600 !important; font-size: 16px !important; border-radius: 10px !important;
                 width: 100% !important; margin-top: 6px;
             }}
-            
             .login-logo {{ display: block; margin: 0 auto 14px; width: 78%; max-width: 320px; }}
             .login-subtitle {{ color: rgba(255, 255, 255, 0.85); text-align: center; font-size: 14px; margin: 0 0 22px; }}
             </style>
@@ -81,9 +84,6 @@ def check_password():
         with st.form("login_form", clear_on_submit=False):
             if logo_b64:
                 st.markdown(f"<img class='login-logo' src='data:image/png;base64,{logo_b64}' alt='LAZURIT' />", unsafe_allow_html=True)
-            else:
-                st.markdown("<h2 style='color:#FFFFFF;text-align:center;margin:0 0 12px;'>LAZURIT</h2>", unsafe_allow_html=True)
-
             st.markdown("<p class='login-subtitle'>Введите ваш персональный код доступа.</p>", unsafe_allow_html=True)
             pwd = st.text_input("Код доступа", type="password", placeholder="Введите код")
             submitted = st.form_submit_button("Войти", use_container_width=True)
@@ -109,23 +109,34 @@ def logout():
         del st.session_state[key]
     st.rerun()
 
-# --- СТИЛИ РАБОЧЕЙ ОБЛАСТИ (с кнопкой выхода в шапке) ---
+# --- СТИЛИ РАБОЧЕЙ ОБЛАСТИ ---
 st.markdown("""
     <style>
     .stApp { background-color: #E8E8E1; }
-    .block-container { padding-top: 1rem !important; max-width: 100% !important; padding-left: 2rem !important; padding-right: 2rem !important; }
     
-    /* ШАПКА - адаптивная под кнопку */
+    /* ПОЛНОСТЬЮ СКРЫВАЕМ ВЕРХНЮЮ ПОЛОСУ STREAMLIT */
+    header, [data-testid="stHeader"], [data-testid="stToolbar"] {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+    }
+
+    .block-container { 
+        padding-top: 1.2rem !important; 
+        max-width: 100% !important; 
+        padding-left: 2rem !important; 
+        padding-right: 2rem !important; 
+    }
+    
     .custom-header { 
         background-color: white; 
-        padding: 15px 30px 45px 30px; 
+        padding: 15px 30px 45px 30px;
         border-radius: 12px; 
-        position: relative; 
+        position: relative;
         margin-bottom: 0px; 
         border: 1px solid #D1D1D1; 
         min-height: 100px; 
     }
-    
     .header-logo { 
         height: 80px !important; 
         width: auto !important; 
@@ -137,10 +148,10 @@ st.markdown("""
         transform: translateY(-50%);
     }
     
-    /* МАГИЯ: ТЯНЕМ КНОПКУ ВЫХОДА ВНУТРЬ ШАПКИ */
+    /* Кнопка выхода внутри шапки */
     div.element-container:has(.logout-marker) { display: none; }
     div.element-container:has(.logout-marker) + div.element-container {
-        margin-top: -60px !important;
+        margin-top: -58px !important;
         margin-left: 30px !important;
         margin-bottom: 25px !important;
         position: relative;
@@ -149,13 +160,13 @@ st.markdown("""
     }
     div.element-container:has(.logout-marker) + div.element-container button {
         background: transparent !important;
-        color: #888 !important;
+        color: #666 !important;
         border: 1px solid #ccc !important;
         border-radius: 6px !important;
-        min-height: 30px !important;
-        height: 30px !important;
-        padding: 0 12px !important;
-        font-size: 13px !important;
+        min-height: 32px !important;
+        height: 32px !important;
+        padding: 0 14px !important;
+        font-size: 13.5px !important;
         transition: all 0.2s;
     }
     div.element-container:has(.logout-marker) + div.element-container button:hover {
@@ -164,40 +175,12 @@ st.markdown("""
         border-color: #FF4B4B !important;
     }
 
-    /* Остальные карточки */
     .card { background-color: #F8F9FA; border-radius: 15px; padding: 20px; border: 1px solid #E0E0E0; margin-bottom: 15px; }
     .card > b { color: #000000 !important; }
-    
-    /* Выбор освещения */
-    div[data-testid="stHorizontalBlock"] button { 
-        background-color: #FFFFFF !important; 
-        color: #333 !important; 
-        border: 1px solid #CCC !important; 
-        font-size: 12px !important; 
-        padding: 4px 6px !important; 
-    }
-    
+    div[data-testid="stHorizontalBlock"] button { background-color: #FFFFFF !important; color: #333 !important; border: 1px solid #CCC !important; font-size: 12px !important; padding: 4px 6px !important; }
     iframe[title*="streamlit_image_select"] { background: transparent !important; }
-    
-    /* Главная кнопка генерации */
-    div.stButton > button:first-child[kind="primary"] { 
-        background: linear-gradient(90deg, #A78BFA 0%, #F87171 100%) !important; 
-        color: white !important; 
-        border: none !important; 
-        height: 55px !important; 
-        font-size: 18px !important; 
-        font-weight: bold !important; 
-    }
-    
-    .empty-result-card { 
-        height: 600px; 
-        display: flex; 
-        flex-direction: column; 
-        align-items: center; 
-        justify-content: center; 
-        color: #888; 
-        border: 2px dashed #CCC; 
-    }
+    div.stButton > button:first-child[kind="primary"] { background: linear-gradient(90deg, #A78BFA 0%, #F87171 100%) !important; color: white !important; border: none !important; height: 55px !important; font-size: 18px !important; font-weight: bold !important; }
+    .empty-result-card { height: 600px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #888; border: 2px dashed #CCC; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -229,18 +212,16 @@ def process_image(img_b64, user_prompt):
     headers = {"Authorization": f"Bearer {APPLICATION_TOKEN}", "x-api-key": APPLICATION_TOKEN, "Content-Type": "application/json"}
     return requests.post(BASE_URL, json=payload, headers=headers).json()
 
-# --- ШАПКА (ЛОГО СПРАВА, КНОПКА ВЫХОДА ПОД ТЕКСТОМ СЛЕВА) ---
+# --- ШАПКА ---
 logo_b64_main = _read_b64(LOGO_PATH)
 st.markdown(f"""
     <div class="custom-header">
-        <div style="color: #444; font-size: 18px; margin-bottom: 5px;">
-            <b>{st.session_state.user_role}!</b> Добро пожаловать в Lazurit AI Render
-        </div>
+        <div style="color: #444; font-size: 18px; margin-bottom: 5px;"><b>{st.session_state.user_role}!</b> Добро пожаловать в Lazurit AI Render</div>
         <img src="data:image/png;base64,{logo_b64_main}" class="header-logo">
     </div>
     """, unsafe_allow_html=True)
 
-# --- КНОПКА ВЫХОДА (встраивается внутрь шапки через маркер) ---
+# --- КНОПКА ВЫХОДА ---
 st.markdown('<div class="logout-marker"></div>', unsafe_allow_html=True)
 if st.button("🚪 Выйти", key="logout_btn"):
     logout()
