@@ -1,8 +1,3 @@
-Для реализации такого дизайна мы используем два компонента `image_select`. Один для круглых иконок (4 в ряд), а второй для длинной кнопки «Свой промт».
-
-Я добавил специальный CSS, который превращает обычные квадратные иконки первого блока в **идеальные круги**, как на вашем примере.
-
-```python
 import streamlit as st
 import requests
 import base64
@@ -336,4 +331,3 @@ with col_hist:
 if st.session_state.last_response:
     with st.expander("🛠 Лог"):
         st.text(st.session_state.last_response)
-```
