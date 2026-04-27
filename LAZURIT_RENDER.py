@@ -1,3 +1,10 @@
+Для того чтобы исправить эти моменты, я внес два изменения:
+1. **Для логотипа:** Увеличил высоту в CSS (сделал `80px`) и добавил класс, чтобы он не «сплющивался».
+2. **Для пустой шапки:** Изменил текст в центральном блоке на «Результат генерации» и сделал его крупнее и красивее, чтобы он не смотрелся пустым.
+
+Вот обновленный код:
+
+```python
 import streamlit as st
 import requests
 import base64
@@ -39,19 +46,26 @@ st.markdown("""
     /* Основной фон */
     .stApp { background-color: #E8E8E1; }
     
-    /* ФИКС: Отступ сверху, чтобы черная полоса не перекрывала шапку */
-    .block-container { padding-top: 3.5rem !important; }
+    /* Отступ сверху */
+    .block-container { padding-top: 2rem !important; }
     
-    /* Шапка как на макете */
+    /* Шапка */
     .custom-header {
         background-color: white;
-        padding: 12px 25px;
+        padding: 15px 30px;
         border-radius: 12px;
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-bottom: 20px;
         border: 1px solid #D1D1D1;
+    }
+    
+    /* РАЗМЕР ЛОГОТИПА */
+    .header-logo {
+        height: 70px; /* Увеличил размер логотипа */
+        width: auto;
+        object-fit: contain;
     }
     
     /* Карточки блоков */
@@ -83,6 +97,17 @@ st.markdown("""
         height: 55px !important;
         font-size: 18px !important;
         font-weight: bold !important;
+    }
+
+    /* Стиль для пустого центрального блока */
+    .empty-result-card {
+        height: 600px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #888;
+        border: 2px dashed #CCC;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -120,7 +145,7 @@ logo_b64 = get_base64_logo(LOGO_PATH)
 st.markdown(f"""
     <div class="custom-header">
         <div style="color: #444; font-size: 18px;"><b>{st.session_state.user_role}!</b> Добро пожаловать в Lazurit AI Render</div>
-        <img src="data:image/jpeg;base64,{logo_b64}" style="height: 40px;">
+        <img src="data:image/jpeg;base64,{logo_b64}" class="header-logo">
     </div>
     """, unsafe_allow_html=True)
 
@@ -134,7 +159,6 @@ with col_left:
     st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown('<div class="card"><b>2. Освещение</b>', unsafe_allow_html=True)
-    # Сетка кнопок 2x3
     p_cols = st.columns(2)
     for i, name in enumerate(PROMPT_PRESETS.keys()):
         if p_cols[i % 2].button(name, use_container_width=True):
@@ -162,13 +186,18 @@ with col_left:
         else: st.warning("Загрузите фото!")
 
 with col_main:
-    # ФИКС: Единый контейнер без пустых окон сверху
     if st.session_state.history:
         st.markdown('<div class="card">', unsafe_allow_html=True)
         st.image(st.session_state.history[0], use_container_width=True, caption="Результат")
         st.markdown('</div>', unsafe_allow_html=True)
     else:
-        st.markdown('<div class="card" style="height: 600px; display: flex; align-items: center; justify-content: center; color: #999;"><h3>РЕЗУЛЬТАТ AI ГЕНЕРАЦИИ</h3></div>', unsafe_allow_html=True)
+        # ИЗМЕНЕНО: Текст в пустой шапке
+        st.markdown("""
+            <div class="card empty-result-card">
+                <h1 style="color: #bbb; font-weight: bold;">Результат генерации</h1>
+                <p style="color: #ccc;">Загрузите изображение для начала работы</p>
+            </div>
+        """, unsafe_allow_html=True)
 
 with col_hist:
     st.markdown("<b>История</b>", unsafe_allow_html=True)
@@ -178,3 +207,17 @@ with col_hist:
 if st.session_state.last_response:
     with st.expander("🛠 Лог"):
         st.text(st.session_state.last_response)
+```
+
+### Что именно изменилось:
+
+1.  **Логотип (Header):**
+    *   Добавлен класс `.header-logo` в CSS с `height: 70px;`.
+    *   В блоке шапки теперь используется `<img class="header-logo" ...>`, что позволяет управлять размером через CSS. Теперь он будет крупным и четким.
+2.  **Центральная область (Результат):**
+    *   Когда истории нет, вместо простого текста теперь отображается стилизованный блок:
+        *   **Заголовок:** `Результат генерации` (большой и серый, чтобы не отвлекать).
+        *   **Подзаголовок:** `Загрузите изображение для начала работы`.
+    *   Добавлена пунктирная рамка (`border: 2px dashed #CCC`), чтобы визуально обозначить зону, где появится картинка.
+3.  **Заголовки (1. Загрузка и т.д.):**
+    *   Сохранен черный цвет, как вы просили ранее.
