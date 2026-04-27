@@ -7,15 +7,21 @@ st.set_page_config(
     page_title="LAZURIT AI Render",
     layout="wide",
     initial_sidebar_state="collapsed",
-    menu_items=None
+    menu_items=None,
 )
+
+# --- ВЫХОД через URL (оставляем как было у вас) ---
+if st.query_params.get("logout") == "true":
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
+    st.query_params.clear()
+    st.rerun()
 
 # --- КОНФИГУРАЦИЯ ---
 BASE_URL = "https://lzrt-nocode.gpt.mws.ru/api/v1/run/bf1dc235-5c36-4bba-8d7e-a88cd5e19bd6?stream=false"
 LOGO_PATH = "logo2.png"
 BACKGROUND_PATH = "background.png"
 
-# --- УТИЛИТЫ ---
 @st.cache_data
 def _read_b64(path: str) -> str:
     try:
@@ -27,18 +33,11 @@ def _read_b64(path: str) -> str:
 def image_to_base64(image_bytes: bytes) -> str:
     return base64.b64encode(image_bytes).decode("utf-8")
 
-def image_src(path: str) -> str:
+def img_src(path: str) -> str:
     b64 = _read_b64(path)
     return f"data:image/png;base64,{b64}" if b64 else ""
 
-# --- ВЫХОД (если хотите оставить, но без переходов по ссылкам) ---
-if st.query_params.get("logout") == "true":
-    for key in list(st.session_state.keys()):
-        del st.session_state[key]
-    st.query_params.clear()
-    st.rerun()
-
-# --- ЭКРАН ВХОДА ---
+# --- ЭКРАН ВХОДА (ваш) ---
 def check_password():
     if "authenticated" not in st.session_state:
         st.session_state.authenticated = False
@@ -117,12 +116,13 @@ def check_password():
                     st.rerun()
                 else:
                     st.error("❌ Код не опознан")
+
         st.stop()
 
 check_password()
 APPLICATION_TOKEN = st.session_state.user_api_key
 
-# --- ФУНКЦИЯ ВЫХОДА ---
+# --- ВЫХОД ---
 def logout():
     for key in list(st.session_state.keys()):
         del st.session_state[key]
@@ -143,34 +143,40 @@ PROMPT_PRESETS = {
     "День": f"Natural bright daylight from windows, soft sun rays. {BASE_PHOTO_PROMPT}",
     "Вечер": f"Warm cozy evening light, mix of interior lamps and dusk. {BASE_PHOTO_PROMPT}",
     "Аксессуары": f"{BASE_PHOTO_PROMPT}",
-    "Свой промт": "",  # пусто = пользователь пишет сам
+    "Свой промт": "",
 }
 
 PRESET_NAMES = ["Студия", "День", "Вечер", "Аксессуары"]
-PRESET_PATHS = ["studio.png", "den.png", "vecher.png", "acsesoar.png"]
+PRESET_ICONS = ["studio.png", "den.png", "vecher.png", "acsesoar.png"]
 
 # --- STATE ---
 if "history" not in st.session_state:
     st.session_state.history = []
-
-if "selected_preset" not in st.session_state:
-    st.session_state.selected_preset = "Студия"
-
+if "selected_preset_idx" not in st.session_state:
+    st.session_state.selected_preset_idx = 0
 if "prompt_text" not in st.session_state:
-    # стартовое значение = выбранный пресет
-    st.session_state.prompt_text = PROMPT_PRESETS[st.session_state.selected_preset]
-
+    st.session_state.prompt_text = PROMPT_PRESETS[PRESET_NAMES[0]]
 if "last_response" not in st.session_state:
     st.session_state.last_response = ""
 
-# --- CALLBACKS (без query_params и без переходов по ссылкам) ---
-def apply_preset(preset_name: str):
-    st.session_state.selected_preset = preset_name
-    st.session_state.prompt_text = PROMPT_PRESETS[preset_name]
+def apply_preset(idx: int):
+    st.session_state.selected_preset_idx = idx
+    st.session_state.prompt_text = PROMPT_PRESETS[PRESET_NAMES[idx]]
 
 def apply_custom_prompt():
-    st.session_state.selected_preset = "Свой промт"
+    st.session_state.selected_preset_idx = -1
     st.session_state.prompt_text = PROMPT_PRESETS["Свой промт"]
+
+# --- API ---
+def process_image(img_b64: str, user_prompt: str):
+    combined_input = f"{user_prompt}|||data:image/jpeg;base64,{img_b64}"
+    payload = {"input_value": combined_input, "output_type": "chat", "input_type": "chat"}
+    headers = {
+        "Authorization": f"Bearer {APPLICATION_TOKEN}",
+        "x-api-key": APPLICATION_TOKEN,
+        "Content-Type": "application/json",
+    }
+    return requests.post(BASE_URL, json=payload, headers=headers).json()
 
 # --- СТИЛИ ---
 st.markdown(
@@ -178,7 +184,6 @@ st.markdown(
     <style>
     .stApp { background-color: #E8E8E1; }
 
-    /* скрываем верхнюю панель Streamlit */
     header, [data-testid="stHeader"], [data-testid="stToolbar"], [data-testid="stDecoration"], #MainMenu, footer {
         display: none !important;
         visibility: hidden !important;
@@ -202,7 +207,6 @@ st.markdown(
         border: 1px solid #D1D1D1;
         min-height: 100px;
     }
-
     .header-logo {
         height: 80px !important;
         width: auto !important;
@@ -214,7 +218,7 @@ st.markdown(
         transform: translateY(-50%);
     }
 
-    /* Кнопка выхода внутри шапки */
+    /* logout */
     div.element-container:has(.logout-marker) { display: none; }
     div.element-container:has(.logout-marker) + div.element-container {
         margin-top: -58px !important;
@@ -241,7 +245,6 @@ st.markdown(
         border-color: #FF4B4B !important;
     }
 
-    /* Карточки */
     .card {
         background-color: #F8F9FA;
         border-radius: 20px;
@@ -251,61 +254,82 @@ st.markdown(
     }
     .card > b { color: #000000 !important; }
 
-    /* Загрузчик и textarea */
     div[data-testid="stFileUploader"] > section { border-radius: 16px !important; }
     div[data-testid="stTextArea"] textarea { border-radius: 16px !important; }
 
-    /* РЯД ИКОНОК (4 в ряд) */
-    .preset-row {
+    /* --- ВАЖНОЕ: настоящие кнопки становятся прозрачными и "лежат" поверх иконок --- */
+    .preset-wrap {
+        width: 100%;
         display: grid;
         grid-template-columns: repeat(4, 1fr);
-        gap: 12px;
+        gap: 14px;
         margin-top: 10px;
         margin-bottom: 14px;
+        align-items: center;
     }
 
-    /* Кнопки-иконки (Streamlit) */
-    .preset-row div.stButton > button {
+    /* каждая ячейка — позиционированный контейнер */
+    .preset-cell {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 1 / 1;        /* квадратик под круг */
+        min-height: 72px;
+    }
+
+    /* круглая иконка (визуальный слой) */
+    .preset-icon {
+        position: absolute;
+        inset: 0;
+        border-radius: 999px;
+        background: rgba(255,255,255,0.75);
+        border: 1.5px solid #D9D0C5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 5px 14px rgba(0,0,0,0.04);
+        overflow: hidden;
+        pointer-events: none; /* чтобы клики проходили в кнопку */
+        backdrop-filter: blur(1px);
+    }
+
+    .preset-icon img {
+        width: 38px;
+        height: 38px;
+        object-fit: contain;
+        display: block;
+        pointer-events: none;
+    }
+
+    /* активная рамка */
+    .preset-cell.active .preset-icon {
+        border: 2px solid #B8906D;
+        box-shadow: 0 0 0 3px rgba(184, 144, 109, 0.14);
+    }
+
+    /* Реальная кнопка Streamlit: растягиваем на весь контейнер и делаем невидимой */
+    .preset-cell div.stButton > button {
+        position: absolute !important;
+        inset: 0 !important;
         width: 100% !important;
-        height: 74px !important;
-        border-radius: 999px !important;        /* круглая/овальная */
-        border: 1.5px solid #D9D0C5 !important;
-        background: #FFFFFF !important;
+        height: 100% !important;
+        border-radius: 999px !important;
+        opacity: 0 !important;            /* невидима */
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
         padding: 0 !important;
-        transition: all 0.18s ease !important;
-        box-shadow: 0 5px 14px rgba(0,0,0,0.04) !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
+        z-index: 5 !important;            /* выше иконки */
+    }
+    .preset-cell div.stButton > button:hover {
+        opacity: 0 !important;
+    }
+    .preset-cell div.stButton > button:focus {
+        outline: none !important;
+        box-shadow: none !important;
     }
 
-    .preset-row div.stButton > button:hover {
-        border-color: #B8906D !important;
-        transform: translateY(-1px);
-        box-shadow: 0 8px 18px rgba(0,0,0,0.08) !important;
-    }
-
-    /* Активная иконка */
-    .preset-active div.stButton > button {
-        border: 2px solid #B8906D !important;
-        box-shadow: 0 0 0 3px rgba(184, 144, 109, 0.14) !important;
-    }
-
-    /* Прячем текст у иконок (оставляем только картинку) */
-    .preset-row div.stButton > button p {
-        display: none !important;
-    }
-
-    /* Картинки внутри кнопок */
-    .preset-row div.stButton > button img {
-        width: 36px !important;
-        height: 36px !important;
-        object-fit: contain !important;
-        display: block !important;
-    }
-
-    /* Кнопка "Свой промт" */
-    div.stButton:has(button[key="custom_prompt_btn"]) button {
+    /* Кнопка "Свой промт" — овальная */
+    .custom-prompt-row div.stButton > button {
         width: 100% !important;
         height: 48px !important;
         border-radius: 999px !important;
@@ -314,8 +338,29 @@ st.markdown(
         color: #4E5966 !important;
         font-weight: 700 !important;
     }
+    .custom-prompt-row div.stButton > button:hover {
+        border-color: #B8906D !important;
+        color: #B8906D !important;
+    }
 
-    /* Главная кнопка генерации */
+    /* Иконка svoi.png внутри кнопки - просто слева */
+    .custom-prompt-row div.stButton > button {
+        position: relative !important;
+        padding-left: 52px !important; /* место под иконку */
+        text-align: left !important;
+    }
+    .custom-prompt-row .svoi-ico {
+        position: absolute;
+        left: 18px;
+        top: 50%;
+        transform: translateY(-50%);
+        height: 22px;
+        width: auto;
+        pointer-events: none;
+        opacity: 0.95;
+    }
+
+    /* Главная кнопка */
     div.stButton > button:first-child[kind="primary"] {
         background: linear-gradient(90deg, #A78BFA 0%, #F87171 100%) !important;
         color: white !important;
@@ -341,13 +386,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# --- API ---
-def process_image(img_b64: str, user_prompt: str):
-    combined_input = f"{user_prompt}|||data:image/jpeg;base64,{img_b64}"
-    payload = {"input_value": combined_input, "output_type": "chat", "input_type": "chat"}
-    headers = {"Authorization": f"Bearer {APPLICATION_TOKEN}", "x-api-key": APPLICATION_TOKEN, "Content-Type": "application/json"}
-    return requests.post(BASE_URL, json=payload, headers=headers).json()
-
 # --- ШАПКА ---
 logo_b64_main = _read_b64(LOGO_PATH)
 st.markdown(
@@ -359,10 +397,10 @@ st.markdown(
         <img src="data:image/png;base64,{logo_b64_main}" class="header-logo">
     </div>
     """,
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
 
-# --- ВЫХОД ---
+# --- КНОПКА ВЫХОДА ---
 st.markdown('<div class="logout-marker"></div>', unsafe_allow_html=True)
 if st.button("🚪 Выйти", key="logout_btn"):
     logout()
@@ -379,58 +417,70 @@ with col_left:
 
     st.markdown('<div class="card"><b>2. Освещение</b>', unsafe_allow_html=True)
 
-    # 4 иконки в ряд (без ссылок, без query_params)
-    st.markdown('<div class="preset-row">', unsafe_allow_html=True)
-
-    # Делаем 4 колонки, в каждой — Streamlit-кнопка (но выглядит как иконка)
-    c1, c2, c3, c4 = st.columns(4, gap="small")
-    cols = [c1, c2, c3, c4]
-
-    for idx, preset_name in enumerate(PRESET_NAMES):
-        icon = image_src(PRESET_PATHS[idx])
-
+    # --- 4 иконки в ряд: ИКОНКИ (HTML) + РЕАЛЬНЫЕ КНОПКИ СВЕРХУ (прозрачные) ---
+    cols = st.columns(4, gap="small")
+    for idx in range(4):
         with cols[idx]:
-            # контейнер для "active" обводки (класс навешиваем через markdown-обертку)
-            active = (st.session_state.selected_preset == preset_name)
-            if active:
-                st.markdown('<div class="preset-active">', unsafe_allow_html=True)
+            active = (st.session_state.selected_preset_idx == idx)
+            cell_class = "preset-cell active" if active else "preset-cell"
 
-            # кнопка без текста — текст прячем CSS
+            st.markdown(f'<div class="{cell_class}">', unsafe_allow_html=True)
+
+            # визуальная иконка (не кликабельна, клики проходят)
+            icon_src = img_src(PRESET_ICONS[idx])
+            if icon_src:
+                st.markdown(
+                    f"""
+                    <div class="preset-icon">
+                        <img src="{icon_src}" alt="{PRESET_NAMES[idx]}">
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+            else:
+                st.markdown(
+                    f"""
+                    <div class="preset-icon">
+                        <span style="color:#B8906D;font-weight:700;">{PRESET_NAMES[idx][0]}</span>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+            # реальная кнопка поверх (прозрачная через CSS)
             if st.button(" ", key=f"preset_btn_{idx}", use_container_width=True):
-                apply_preset(preset_name)
+                apply_preset(idx)
 
-            # подмена содержимого кнопки на картинку (CSS не может вставить img),
-            # поэтому рисуем картинку отдельным markdown и позиционируем поверх кнопки:
-            st.markdown(
-                f"""
-                <style>
-                div[data-testid="column"]:has(button[key="preset_btn_{idx}"]) {{
-                    position: relative;
-                }}
-                div[data-testid="column"]:has(button[key="preset_btn_{idx}"]) img.preset-img-{idx} {{
-                    position: absolute;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    width: 36px;
-                    height: 36px;
-                    pointer-events: none;
-                }}
-                </style>
-                """,
-                unsafe_allow_html=True
-            )
-            if icon:
-                st.markdown(f'<img class="preset-img-{idx}" src="{icon}">', unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
 
-            if active:
-                st.markdown("</div>", unsafe_allow_html=True)
-
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    # "Свой промт" (обычная streamlit-кнопка, без html в label!)
+    # --- Кнопка "Свой промт" с иконкой svoi.png ---
+    st.markdown('<div class="custom-prompt-row">', unsafe_allow_html=True)
     if st.button("СВОЙ ПРОМТ (задание)", key="custom_prompt_btn", use_container_width=True):
         apply_custom_prompt()
+
+    svoi_src = img_src("svoi.png")
+    if svoi_src:
+        st.markdown(
+            f"""
+            <style>
+            div.element-container:has(button[key="custom_prompt_btn"]) {{
+                position: relative;
+            }}
+            div.element-container:has(button[key="custom_prompt_btn"]) img.svoi-ico {{
+                position: absolute;
+                left: 18px;
+                top: 50%;
+                transform: translateY(-50%);
+                height: 22px;
+                width: auto;
+                pointer-events: none;
+            }}
+            </style>
+            <img class="svoi-ico" src="{svoi_src}">
+            """,
+            unsafe_allow_html=True,
+        )
+    st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -473,7 +523,7 @@ with col_main:
                 <p style="color: #ccc;">Загрузите изображение для начала работы</p>
             </div>
             """,
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
 
 with col_hist:
