@@ -111,12 +111,11 @@ st.markdown("""
 BASE_PHOTO_PROMPT = ("Masterpiece, 8k resolution, photorealistic interior photography, Architectural Digest style. Maintain the original color palette and materials of the furniture strictly. Enhance existing textures (wood grain, stone, fabric) without changing their color. Replace flat lighting with professional cinematic studio lighting and realistic global illumination. Add natural soft sunlight and deep realistic shadows to create depth. High-contrast, sharp details, realistic reflections on surfaces. Feel free to completely re-texture surfaces. Add dramatic lighting. Replace the flat lighting of the render with high-contrast studio light. Ensure 100% photorealism, Architectural Digest style. Masterpiece, 8k resolution, photorealistic interior photography. Completely re-texture all surfaces using high-end materials (marble, brushed metal, grain wood). Replace flat CG lighting with realistic global illumination and dramatic cinematic shadows. Add subtle natural sunlight from windows. Architectural Digest style, sharp focus, volumetric fog, ray-traced reflections. NO 3D render look, NO flat textures.")
 
 PROMPT_PRESETS = {
-    "Базовый промт": f"{BASE_PHOTO_PROMPT}",
-    "Свой промт": "",
-    "Дневной свет": f"Natural bright daylight from windows, soft sun rays. {BASE_PHOTO_PROMPT}",
-    "Студийный свет": f"Professional architectural studio lighting, balanced fills. {BASE_PHOTO_PROMPT}",
+    "День": f"Natural bright daylight from windows, soft sun rays. {BASE_PHOTO_PROMPT}",
+    "Студия": f"Professional architectural studio lighting, balanced fills. {BASE_PHOTO_PROMPT}",
     "Вечер": f"Warm cozy evening light, mix of interior lamps and dusk. {BASE_PHOTO_PROMPT}",
-    "Unreal Style": f"Ultra-realistic Unreal Engine 5.4 Lumen render style. {BASE_PHOTO_PROMPT}"
+    "Аксессуары": "",
+    "Свой промт": ""
 }
 
 if 'history' not in st.session_state: st.session_state.history = []
