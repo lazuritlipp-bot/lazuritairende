@@ -249,7 +249,7 @@ PROMPT_PRESETS = {
     "День": f"Natural bright daylight from windows, soft sun rays. {BASE_PHOTO_PROMPT}",
     "Вечер": f"Warm cozy evening light, mix of interior lamps and dusk. {BASE_PHOTO_PROMPT}",
     "Аксессуары": f"{BASE_PHOTO_PROMPT}",
-    "Свой промт": "",
+    "Свой промт": f" ",
 }
 
 if 'history' not in st.session_state: st.session_state.history = []
