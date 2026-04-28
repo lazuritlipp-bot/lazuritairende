@@ -162,7 +162,7 @@ st.markdown("""
         background: transparent !important;
         color: #666 !important;
         border: 1px solid #ccc !important;
-        border-radius: 8px !important;
+        border-radius: 6px !important;
         min-height: 32px !important;
         height: 32px !important;
         padding: 0 14px !important;
@@ -175,62 +175,12 @@ st.markdown("""
         border-color: #FF4B4B !important;
     }
 
-    /* СКРУГЛЕНИЯ И СТИЛИ КАРТОЧЕК */
-    .card { 
-        background-color: #F8F9FA; 
-        border-radius: 20px;
-        padding: 20px; 
-        border: 1px solid #E0E0E0; 
-        margin-bottom: 15px; 
-    }
+    .card { background-color: #F8F9FA; border-radius: 15px; padding: 20px; border: 1px solid #E0E0E0; margin-bottom: 15px; }
     .card > b { color: #000000 !important; }
-    
-    /* Скругление текстового поля и загрузчика */
-    div[data-testid="stTextArea"] > div > div > textarea { border-radius: 16px !important; }
-    div[data-testid="stFileUploader"] > section { border-radius: 16px !important; }
-    
-    /* Округление самого контейнера image_select */
-    iframe[title*="streamlit_image_select"] { 
-        background: transparent !important; 
-        border-radius: 16px !important;
-        overflow: hidden !important;
-    }
-    
-    /* Скругление кнопок */
-    div[data-testid="stHorizontalBlock"] button { 
-        background-color: #FFFFFF !important; 
-        color: #333 !important; 
-        border: 1px solid #CCC !important; 
-        font-size: 12px !important; 
-        padding: 4px 6px !important; 
-        border-radius: 10px !important;
-    }
-    
-    div.stButton > button:first-child[kind="primary"] { 
-        background: linear-gradient(90deg, #A78BFA 0%, #F87171 100%) !important; 
-        color: white !important; 
-        border: none !important; 
-        height: 55px !important; 
-        font-size: 17px !important; 
-        font-weight: bold !important; 
-        border-radius: 16px !important;
-    }
-    
-    .empty-result-card { 
-        height: 600px; 
-        display: flex; 
-        flex-direction: column; 
-        align-items: center; 
-        justify-content: center; 
-        color: #888; 
-        border: 2px dashed #CCC; 
-        border-radius: 24px;
-    }
-    
-    /* Скругление загруженных картинок в левой колонке */
-    div[data-testid="column"]:nth-child(1) img {
-        border-radius: 12px !important;
-    }
+    div[data-testid="stHorizontalBlock"] button { background-color: #FFFFFF !important; color: #333 !important; border: 1px solid #CCC !important; font-size: 12px !important; padding: 4px 6px !important; }
+    iframe[title*="streamlit_image_select"] { background: transparent !important; }
+    div.stButton > button:first-child[kind="primary"] { background: linear-gradient(90deg, #A78BFA 0%, #F87171 100%) !important; color: white !important; border: none !important; height: 55px !important; font-size: 18px !important; font-weight: bold !important; }
+    .empty-result-card { height: 600px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #888; border: 2px dashed #CCC; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -249,21 +199,12 @@ PROMPT_PRESETS = {
     "День": f"Natural bright daylight from windows, soft sun rays. {BASE_PHOTO_PROMPT}",
     "Вечер": f"Warm cozy evening light, mix of interior lamps and dusk. {BASE_PHOTO_PROMPT}",
     "Аксессуары": f"{BASE_PHOTO_PROMPT}",
-    "Свой промт": "",  # Пустая строка для ручного ввода
+    "Свой промт": "",
 }
 
-# --- СОСТОЯНИЕ ПРИЛОЖЕНИЯ ---
-if 'history' not in st.session_state:
-    st.session_state.history = []
-
-if 'current_prompt' not in st.session_state:
-    st.session_state.current_prompt = PROMPT_PRESETS["Студия"]
-
-if 'last_response' not in st.session_state:
-    st.session_state.last_response = ""
-
-if '_preset_idx' not in st.session_state:
-    st.session_state._preset_idx = 0
+if 'history' not in st.session_state: st.session_state.history = []
+if 'current_prompt' not in st.session_state: st.session_state.current_prompt = next(iter(PROMPT_PRESETS.values()))
+if 'last_response' not in st.session_state: st.session_state.last_response = ""
 
 def process_image(img_b64, user_prompt):
     combined_input = f"{user_prompt}|||data:image/jpeg;base64,{img_b64}"
@@ -286,7 +227,7 @@ if st.button("🚪 Выйти", key="logout_btn"):
     logout()
 
 # --- РАБОЧАЯ ОБЛАСТЬ ---
-col_left, col_main, col_hist = st.columns([1.0, 3.5, 0.6])
+col_left, col_main, col_hist = st.columns([2.2, 2.2, 0.6])
 
 with col_left:
     st.markdown('<div class="card"><b>1. Загрузка</b>', unsafe_allow_html=True)
@@ -312,31 +253,18 @@ with col_left:
         key="preset_image_select",
     )
 
-    # При выборе иконки обновляем промпт и делаем rerun
     if selected_idx is not None and st.session_state.get("_preset_idx") != selected_idx:
         st.session_state.current_prompt = PROMPT_PRESETS[PRESET_NAMES[selected_idx]]
         st.session_state._preset_idx = selected_idx
         st.rerun()
 
-    # Кнопка "Свой промт" — обнуляем текст и сбрасываем индекс
     if st.button("Свой промт", key="custom_prompt_btn", use_container_width=True):
-        st.session_state.current_prompt = ""  # ОЧИЩАЕМ ПОЛЕ
+        st.session_state.current_prompt = PROMPT_PRESETS.get("Свой промт", "")
         st.session_state._preset_idx = None
         st.rerun()
-    
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # ТЕКСТОВОЕ ПОЛЕ — ВАЖНО: используем key и значение из session_state
-    user_text = st.text_area(
-        "ТЗ промпта:",
-        key="prompt_text",
-        value=st.session_state.current_prompt,
-        height=200
-    )
-
-    # Если пользователь печатает в поле, сохраняем в session_state.current_prompt
-    if user_text != st.session_state.current_prompt:
-        st.session_state.current_prompt = user_text
+    user_text = st.text_area("ТЗ промпта:", value=st.session_state.current_prompt, height=200)
 
     if st.button("ГЕНЕРИРОВАТЬ AI ИЗОБРАЖЕНИЕ", use_container_width=True, type="primary"):
         if f:
@@ -359,7 +287,7 @@ with col_left:
 
 with col_main:
     if st.session_state.history:
-        st.markdown('<div class="card" style="padding: 10px;">', unsafe_allow_html=True)
+        st.markdown('<div class="card">', unsafe_allow_html=True)
         st.image(st.session_state.history[0], use_container_width=True, caption="Результат")
         st.markdown('</div>', unsafe_allow_html=True)
     else:
