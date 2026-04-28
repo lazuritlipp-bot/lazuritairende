@@ -178,7 +178,7 @@ st.markdown("""
     /* СКРУГЛЕНИЯ И СТИЛИ КАРТОЧЕК */
     .card { 
         background-color: #F8F9FA; 
-        border-radius: 20px; /* Увеличено скругление карточек */
+        border-radius: 20px;
         padding: 20px; 
         border: 1px solid #E0E0E0; 
         margin-bottom: 15px; 
@@ -213,7 +213,7 @@ st.markdown("""
         height: 55px !important; 
         font-size: 17px !important; 
         font-weight: bold !important; 
-        border-radius: 16px !important; /* Круглая главная кнопка */
+        border-radius: 16px !important;
     }
     
     .empty-result-card { 
@@ -249,12 +249,21 @@ PROMPT_PRESETS = {
     "День": f"Natural bright daylight from windows, soft sun rays. {BASE_PHOTO_PROMPT}",
     "Вечер": f"Warm cozy evening light, mix of interior lamps and dusk. {BASE_PHOTO_PROMPT}",
     "Аксессуары": f"{BASE_PHOTO_PROMPT}",
-    "Свой промт": f" ",
+    "Свой промт": "",  # Пустая строка для ручного ввода
 }
 
-if 'history' not in st.session_state: st.session_state.history = []
-if 'current_prompt' not in st.session_state: st.session_state.current_prompt = next(iter(PROMPT_PRESETS.values()))
-if 'last_response' not in st.session_state: st.session_state.last_response = ""
+# --- СОСТОЯНИЕ ПРИЛОЖЕНИЯ ---
+if 'history' not in st.session_state:
+    st.session_state.history = []
+
+if 'current_prompt' not in st.session_state:
+    st.session_state.current_prompt = PROMPT_PRESETS["Студия"]
+
+if 'last_response' not in st.session_state:
+    st.session_state.last_response = ""
+
+if '_preset_idx' not in st.session_state:
+    st.session_state._preset_idx = 0
 
 def process_image(img_b64, user_prompt):
     combined_input = f"{user_prompt}|||data:image/jpeg;base64,{img_b64}"
@@ -276,8 +285,7 @@ st.markdown('<div class="logout-marker"></div>', unsafe_allow_html=True)
 if st.button("🚪 Выйти", key="logout_btn"):
     logout()
 
-# --- РАБОЧАЯ ОБЛАСТЬ (ИЗМЕНЕННЫЕ ПРОПОРЦИИ КОЛОНОК) ---
-# [1.0, 3.5, 0.6] -> Левая колонка стала в 2 раза уже, центральная намного шире
+# --- РАБОЧАЯ ОБЛАСТЬ ---
 col_left, col_main, col_hist = st.columns([1.0, 3.5, 0.6])
 
 with col_left:
@@ -304,18 +312,31 @@ with col_left:
         key="preset_image_select",
     )
 
+    # При выборе иконки обновляем промпт и делаем rerun
     if selected_idx is not None and st.session_state.get("_preset_idx") != selected_idx:
         st.session_state.current_prompt = PROMPT_PRESETS[PRESET_NAMES[selected_idx]]
         st.session_state._preset_idx = selected_idx
         st.rerun()
 
+    # Кнопка "Свой промт" — обнуляем текст и сбрасываем индекс
     if st.button("Свой промт", key="custom_prompt_btn", use_container_width=True):
-        st.session_state.current_prompt = PROMPT_PRESETS.get("Свой промт", "")
+        st.session_state.current_prompt = ""  # ОЧИЩАЕМ ПОЛЕ
         st.session_state._preset_idx = None
         st.rerun()
+    
     st.markdown('</div>', unsafe_allow_html=True)
 
-    user_text = st.text_area("ТЗ промпта:", value=st.session_state.current_prompt, height=200)
+    # ТЕКСТОВОЕ ПОЛЕ — ВАЖНО: используем key и значение из session_state
+    user_text = st.text_area(
+        "ТЗ промпта:",
+        key="prompt_text",
+        value=st.session_state.current_prompt,
+        height=200
+    )
+
+    # Если пользователь печатает в поле, сохраняем в session_state.current_prompt
+    if user_text != st.session_state.current_prompt:
+        st.session_state.current_prompt = user_text
 
     if st.button("ГЕНЕРИРОВАТЬ AI ИЗОБРАЖЕНИЕ", use_container_width=True, type="primary"):
         if f:
