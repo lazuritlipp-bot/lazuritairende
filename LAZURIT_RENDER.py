@@ -114,7 +114,6 @@ st.markdown("""
     <style>
     .stApp { background-color: #E8E8E1; }
     
-    /* ПОЛНОСТЬЮ СКРЫВАЕМ ВЕРХНЮЮ ПОЛОСУ STREAMLIT */
     header, [data-testid="stHeader"], [data-testid="stToolbar"] {
         display: none !important;
         visibility: hidden !important;
@@ -148,7 +147,6 @@ st.markdown("""
         transform: translateY(-50%);
     }
     
-    /* Кнопка выхода внутри шапки */
     div.element-container:has(.logout-marker) { display: none; }
     div.element-container:has(.logout-marker) + div.element-container {
         margin-top: -58px !important;
@@ -175,7 +173,6 @@ st.markdown("""
         border-color: #FF4B4B !important;
     }
 
-    /* СКРУГЛЕНИЯ И СТИЛИ КАРТОЧЕК */
     .card { 
         background-color: #F8F9FA; 
         border-radius: 20px;
@@ -185,18 +182,15 @@ st.markdown("""
     }
     .card > b { color: #000000 !important; }
     
-    /* Скругление текстового поля и загрузчика */
     div[data-testid="stTextArea"] > div > div > textarea { border-radius: 16px !important; }
     div[data-testid="stFileUploader"] > section { border-radius: 16px !important; }
     
-    /* Округление самого контейнера image_select */
     iframe[title*="streamlit_image_select"] { 
         background: transparent !important; 
         border-radius: 16px !important;
         overflow: hidden !important;
     }
     
-    /* Скругление кнопок */
     div[data-testid="stHorizontalBlock"] button { 
         background-color: #FFFFFF !important; 
         color: #333 !important; 
@@ -227,7 +221,6 @@ st.markdown("""
         border-radius: 24px;
     }
     
-    /* Скругление загруженных картинок в левой колонке */
     div[data-testid="column"]:nth-child(1) img {
         border-radius: 12px !important;
     }
@@ -249,21 +242,12 @@ PROMPT_PRESETS = {
     "День": f"Natural bright daylight from windows, soft sun rays. {BASE_PHOTO_PROMPT}",
     "Вечер": f"Warm cozy evening light, mix of interior lamps and dusk. {BASE_PHOTO_PROMPT}",
     "Аксессуары": f"{BASE_PHOTO_PROMPT}",
-    "Свой промт": "",  # Пустая строка для ручного ввода
+    "Свой промт": "",  # ✅ пустая строка
 }
 
-# --- СОСТОЯНИЕ ПРИЛОЖЕНИЯ ---
-if 'history' not in st.session_state:
-    st.session_state.history = []
-
-if 'current_prompt' not in st.session_state:
-    st.session_state.current_prompt = PROMPT_PRESETS["Студия"]
-
-if 'last_response' not in st.session_state:
-    st.session_state.last_response = ""
-
-if '_preset_idx' not in st.session_state:
-    st.session_state._preset_idx = 0
+if 'history' not in st.session_state: st.session_state.history = []
+if 'current_prompt' not in st.session_state: st.session_state.current_prompt = next(iter(PROMPT_PRESETS.values()))
+if 'last_response' not in st.session_state: st.session_state.last_response = ""
 
 def process_image(img_b64, user_prompt):
     combined_input = f"{user_prompt}|||data:image/jpeg;base64,{img_b64}"
@@ -275,12 +259,13 @@ def process_image(img_b64, user_prompt):
 logo_b64_main = _read_b64(LOGO_PATH)
 st.markdown(f"""
     <div class="custom-header">
-        <div style="color: #444; font-size: 18px; margin-bottom: 5px;"><b>{st.session_state.user_role}!</b> Добро пожаловать в Lazurit AI Render</div>
+        <div style="color: #444; font-size: 18px; margin-bottom: 5px;">
+            <b>{st.session_state.user_role}!</b> Добро пожаловать в Lazurit AI Render
+        </div>
         <img src="data:image/png;base64,{logo_b64_main}" class="header-logo">
     </div>
     """, unsafe_allow_html=True)
 
-# --- КНОПКА ВЫХОДА ---
 st.markdown('<div class="logout-marker"></div>', unsafe_allow_html=True)
 if st.button("🚪 Выйти", key="logout_btn"):
     logout()
@@ -296,12 +281,7 @@ with col_left:
 
     st.markdown('<div class="card"><b>2. Освещение</b>', unsafe_allow_html=True)
     PRESET_NAMES = ["Студия", "День", "Вечер", "Аксессуары"]
-    PRESET_PATHS = [
-        "studio.png",
-        "den.png",
-        "vecher.png",
-        "acsesoar.png",
-    ]
+    PRESET_PATHS = ["studio.png", "den.png", "vecher.png", "acsesoar.png"]
 
     selected_idx = image_select(
         label="",
@@ -312,31 +292,32 @@ with col_left:
         key="preset_image_select",
     )
 
-    # При выборе иконки обновляем промпт и делаем rerun
     if selected_idx is not None and st.session_state.get("_preset_idx") != selected_idx:
         st.session_state.current_prompt = PROMPT_PRESETS[PRESET_NAMES[selected_idx]]
         st.session_state._preset_idx = selected_idx
+        # ✅ Сбрасываем виджет при смене пресета
+        if "prompt_textarea" in st.session_state:
+            del st.session_state["prompt_textarea"]
         st.rerun()
 
-    # Кнопка "Свой промт" — обнуляем текст и сбрасываем индекс
+    # ✅ ИСПРАВЛЕННАЯ кнопка "Свой промт"
     if st.button("Свой промт", key="custom_prompt_btn", use_container_width=True):
-        st.session_state.current_prompt = ""  # ОЧИЩАЕМ ПОЛЕ
+        st.session_state.current_prompt = ""
         st.session_state._preset_idx = None
+        # Удаляем ключ виджета — это заставит textarea перерисоваться с пустым значением
+        if "prompt_textarea" in st.session_state:
+            del st.session_state["prompt_textarea"]
         st.rerun()
-    
+
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # ТЕКСТОВОЕ ПОЛЕ — ВАЖНО: используем key и значение из session_state
+    # ✅ key="prompt_textarea" — обязателен для сброса
     user_text = st.text_area(
         "ТЗ промпта:",
-        key="prompt_text",
         value=st.session_state.current_prompt,
-        height=200
+        height=200,
+        key="prompt_textarea",
     )
-
-    # Если пользователь печатает в поле, сохраняем в session_state.current_prompt
-    if user_text != st.session_state.current_prompt:
-        st.session_state.current_prompt = user_text
 
     if st.button("ГЕНЕРИРОВАТЬ AI ИЗОБРАЖЕНИЕ", use_container_width=True, type="primary"):
         if f:
