@@ -13,6 +13,7 @@ BUTTON_CONFIG = {
     "Дневной": ("den.png", "Natural bright daylight from windows, soft sun rays."),
     "Студийный": ("studio.png", "Professional architectural studio lighting, balanced fills."),
     "Вечерний": ("vecher.png", "Warm cozy evening light, mix of interior lamps and dusk."),
+    "Аксессуары кухни": ("acsesoar.png", "High-fidelity photorealistic kitchen interior. Curated placement of premium accessories on countertops and open shelves. Items include: stacked wood cutting boards, matte ceramic fruit bowls with lemons, glass oil and spice jars, and potted herbs. A high-end toaster and coffee maker are also placed on the countertops. Do not include any books, towels, frying pans, or blenders. Maintain the existing kitchen geometry and colors exactly.."),
     "Аксессуары": ("acsesoar.png", "Focus on luxury accessories, detailed textures, cinematic close-up."),
     "Свой": ("svoi.png", ""),
 }
